@@ -1,0 +1,15 @@
+{
+  "policy": "visual",
+  "glyph_priority": "ru",
+  "dynamic_localisation": false,
+  "items": [
+    {
+      "key": "short_focus_desc",
+      "description": "Короткое описание."
+    },
+    {
+      "key": "mixed_focus_desc",
+      "description": "Армия: §Y+5%§! Attack"
+    }
+  ]
+}

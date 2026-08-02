@@ -1,0 +1,510 @@
+[
+  {
+    "case_id": "00360-01e3339110f2",
+    "text": "Our efforts to increase oil extraction have born fruit: Our oil industry is booming, and it doesn't show signs of stopping. It is believed that with increased funding, more synthetic oil can be produced. We will also be able to further expand the Adelart Oil Fields, and take advantage of any source that remains untapped. It is likely that the \"Black Gold\", as many griffons have named it, will continue to flow for many decades more.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "00601-193f9e6ebadd",
+    "text": "With the success of the informant network, the Baron has ordered the creation of a secret police force within Angriver. The Loyalitätsoffiziere will monitor the population for any signs of treachery or Republicanism, and will have the authority to deal with possible uprisings before they start at all. The secret police will also have authority over the army, to ensure their absolute loyalty to the Baron.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "00692-23c0ec2574ea",
+    "text": "In preparation for the unification of Herzland, a comprehensive list was prepared by the Black Claw that included the names of all prominent griffons who would need to be arrested and dealt with as soon as possible. This list includes republicans, socialists, communists, anarchists, peasant leaders, merchants, saboteurs, traitors, terrorists, rabble-rousers, rebels, harmonists, liberals, progressives, heretics, atheists, bandits, foreigners, spies, dissidents...",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "01112-e157d1a4edfc",
+    "text": "As long as the Bakaran military maintains an independent ideology and power base, they will represent an unacceptable threat to the development of socialism. This threat can only be eliminated by purging disloyal elements from the officer corps and enforcing ideological orthodoxy from the top down. Publishing a book of quotations from President Bray Foam and distributing it widely would be a good start.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "01197-bd3ab8eefb67",
+    "text": "The Pomorska Obveščevalna Služba (Naval Intelligence Service) is supposed to be responsible for reporting on the developments and activities of foreign navies and monitoring maritime threats. However, a recent trend has seen POS agents become overzealous and begin to overstep their authority. We need to take steps to rein in the agency; it must not be allowed to become a weapon to be wielded by the Navy against their political opponents.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "01530-d59de26d59be",
+    "text": "Equestria has been slain. Now from the rotting remains. A new State will rise and grow. A powerful unbreakable State. A State led by the greatest leader to have ever lived. A State liberated from reactionarism, capitalism and monarchism. All the sins of the past have been cleansed. Upon the empty canvas a new story will be written.\\n\\nGlory to the State.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "02131-602d56100556",
+    "text": "The competition that capitalism breeds weeds out the weak and unsustainable businesses, but sometimes a guiding hoof is needed to ensure that the country's economy charges forward without the meddling of businessponies. Our economy shall sustain itself, we shall not hide it any longer! While we may not offer the same stock options, we can certainly guarantee that the state's businesses are too big to fail.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "02145-55413916a8ba",
+    "text": "Cheap, maneuverable, and swift; it is also easy to see why the Council favors this surface ship. Although not as effective at raiding as our submarines, our destroyers are ancient in comparison to that of our enemies. New hulls and new guns mounted on them will make our surface fleet stronger. It is wiser to start at the ground up for retrofits with the support ships rather than starting with the battleships after all.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "02212-d3380e69df34",
+    "text": "Although the Bits gun might look strange and according to reports nearly impossible to carry comfortably, our wayward enemies in Equestria have created a reliable weapon suited for all types of environments. An internal compartment inside the receiver prevents the submachine gun from jamming even after dipped in mud or sand. Even its odd placement of the magazine holds a pragmatic purpose; we must have it for ourselves.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "02257-5a9f2693d0a5",
+    "text": "The industry required to sustain our massive military build-up can only be met by government subsidies into industry itself. To keep our military top of the line, we embrace this unique balance between industry, research, and government against the critics who warn of tying our commercial assets even deeper with out military forces. With this change, we will be able to research more and choose which projects best suit our force.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "02270-03c9e0401617",
+    "text": "Cheap, maneuverable, and swift; it is also easy to see why the Council favors this surface ship. Although not as effective at raiding as our submarines, our destroyers are ancient in comparison to that of our enemies. New hulls and new guns mounted on them will make our surface fleet stronger. It is wiser to start at the ground up for retrofits with the support ships rather than starting with the battleships after all.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "02826-cb93f575b2c9",
+    "text": "Salmarkt was granted to the Prince of Brodfeld 200 years ago by the Emperor himself, who had seized it from the pathetic minotaurs. Shortly after the civil war began, the despicable Countess of Cyanolisia sent his army to occupy the region, claiming to protect local civilians from the ravages of war. But even after peace came it remained in enemy claws. We have no option but to take what is rightfully ours!",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "03480-a04adcdfbf2a",
+    "text": "Long ago, buffalo warriors were feared by ponies across the South. When ponies came, they came deferentially, and they gave us respect. Now they steal our land and resources and laugh at our backwardness. How much longer will we endure this shame? Our ancestors were warriors, not cowards, and even when at peace they were feared! After years of humiliation, we will show the world the buffalo still have fire in our blood!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "03766-5ffbdef8f5f2",
+    "text": "With the new waves of admirals and the constantly evolving state of naval warfare, it is no longer in our best interest to run every single aspect of the ESEN as a part of another branch of the military. By ensuring the ESEN Admiralty is independent from the other parts of the military, and establishing them in Saltmane, we can ensure our plans and battles upon the high seas are led by those who know the best.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "04153-3d04a0abd9e3",
+    "text": "The ongoing modernisation of Changeling military operational doctrine necessitates the construction of infrastructure to complement the Heer's new role as the peacekeepers of Equus. To this end, a series of self-sufficient garrison outposts, with their own airfields and logistics facilities, will be established across Equestria — the loci for the Heer's projection of power across the Hegemony and beyond.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "04193-d324faa44c9c",
+    "text": "The Everfree Forest has a reputation for being an inhospitable hellhole, full of monstrous fauna and predatory flora. Although the Heer has been forced to withdraw from the Forest, we are sure that this is but a temporary setback: with the might of the Hives' industry and military, the Pax Chrysalia will finish what the Industrial Revolution started, and wipe out this last bastion of primitive wilderness in the modern era.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "04322-268185306e8b",
+    "text": "The spirit of ponies wins the wars, but to do so, they require contemporary weapons and protection. A state subsidised company will be formed to produce exclusively magically infused rifles, which is expected to soon supplant the basic weaponry ponies have used thus far. Concerns have been raised about the reliability of such firearms, but the designers have assured us that testing will eliminate any faults.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "04479-4d4c12248a50",
+    "text": "The former Sufrit, Zalathel Zarca, proved instrumental in helping Zerutra stop the Constitutionalist's plot against the nation; however, gaining his support required us to promise him the position of Sufrit following a transitional phase with Zerutra, something that is unfeasible. The young Zarca already had his chance in governing Colthage, and he failed at it, so why should he be permitted to fail again?",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "04526-b61a60b37c15",
+    "text": "It has been theorised that the process of social evolution goes hoof and hoof with evolution of species that make up society, meaning we should be concerned with the genetic state of the population. But this view is far from universal, and there is a heated debate among Scientifids about exactly how scientific or ethical this field of eugenics is, and if a policy of \"guided evolution\" should be implemented at all.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "05023-69cae54f2eee",
+    "text": "While we have some local experts, our burgeoning industrial sector requires more expertise than we currently have. We will offer generous salaries and prestigious positions to foreign architects, engineers, metallurgists, and industrial scientists who come to work here. They will train a new generation of Coltvan workers in the most modern industrial methods, and soon we will be the ones other nations look to for expertise.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "05030-9cff2aa9d970",
+    "text": "Some of the farmers on the new plantations have approached us, saying that introducing sugarcane into their existing crop rotation scheme will provide a valuable cash crop while not degrading the soil conditions. Several of the villages around these plantations have also expressed interest in setting up local distilleries once the sugar crop starts to come in, so that they can start up a rum industry which would bring money into these villages and prove a valuable export. We should encourage these developments.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "05037-727e03ef158a",
+    "text": "The reality is, we have no single service rifle. The LAE is a disparate force of peasants and workers, bringing what weapons they could to the struggle when they felt they had no choice but to take up arms. Still, officially adopting the Garcano rifle as our standard service rifle will streamline the process of manufacturing new weapons and equipping new units, although it could be many years before our soldiers' kits are standardised in practice.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "05929-141ddb6b29cd",
+    "text": "While some may say that factories are the opposite of magic, they have far more in common than expected. Like alchemists, factories turn lumps of iron and dirt into tanks, bullets, bombs, and ships. Indeed, industrial output can easily outstrip that of its magical counterparts due to economies of scale. We shall harness this power for Our ends, and bring the magic of industry into the long list of magics We have mastered.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "06224-f53aa5234bc5",
+    "text": "One needn't look further for the primary culprits of the Depression than the perfidious and reckless bankers of New Mareland. Their runaway speculation and insidious gambling with the futures of our citizens ruined lives and livelihoods. We will make sure that this will never happen again. Even if we have to break a thousand banks and jail thousands of bankers, the little ponies must be defended against this madness.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "06254-835f1fd3b1f2",
+    "text": "\"When undertaking an endeavour of the ideological class as supremacism, the ponies advocating for one such regime must have forgotten a similar and infamous manifesto that, when published in the Aquileian Kingdom led to a bloody revolution that led to the overthrow of the King.\"\\nAs for the Aquileian King those years ago, so for the reactionaries of now.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "06413-4d824df32bf8",
+    "text": "Evening Dew has made a shocking announcement: since he has done a flawless job of ruling us and anticipating Her Imperial Majesty's wishes, a change of title is in order. Instead of being merely Governor-General, he shall be the Prophet of the Nightmare, and his words shall carry the same weight as those of the Empress. Evening assures us that the Empress will gladly accept this unprecedented power grab.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "07230-9142706a42a8",
+    "text": "A nation in these days is measured by its economy. And it is here we must focus on the engines of wealth that drive the economy. Many businesses and corporations in both Cloudbury and the Herzland have been begging for a kickstart to have the economy up and running soon again. Indeed, the corporations that once worked with Republicans and Imperials have made themselves available to us, in exchange for a stimulus boost.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "07974-a5a0887ce556",
+    "text": "The FNV and LDP might be radically opposed on almost every account, but if Feathisia is to get through these trying times, compromises must be made. The gap between the beliefs of the two parties has been growing smaller, with more radical nationalists tapering off, and with more and more members of the LDP growing less adamant in their beliefs. Perhaps these two groups may unite, for the sake of the country?",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "08797-2fd09831b0eb",
+    "text": "Our experience with the well-organized bandits of the FLNT has motivated us to establish the SAP, Squadre Antipartigiane, as a detachment of the army. It will be tasked with rearguard operations, territorial pacification and anti-insurgency campaigns. Its ranks will be filled with the most battle-hardened and fearless members of the Tarrin garrison, who will use any methods possible to suppress resistance.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "08830-89990fa1e36a",
+    "text": "The monarchy of Francistria was once allied with the equally tyrannical regimes of Talouse and Arantiga. The new Piumont has no interest in respecting such agreements. Even if local revolutionaries had been successful, they are far too unorthodox to be considered proper communists. Now they are without the protection of Wingbardy while the local peasants yearn for freedom. What are we waiting for? To war!",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "08831-b7574ff01c93",
+    "text": "Maximising the production of food has been one of the main goals for our party for a long time, but now we finally have the means to accomplish this. The Institute of Agronomy has drafted a plan to dramatically improve productivity. It will require digging irrigation channels, increased use of machinery, more efficient crop rotation, widespread use of fertilizer and so on. The peasants must get to work at once!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "09664-267caccc27fb",
+    "text": "The airplane was invented by the Schreiber brothers, an ingenious pair of griffons who weren't so brilliant when it came to business decisions. It only took a decade before their invention was developed sufficiently enough to be used in warfare, and it has changed battles forever. We were pioneers of their usage, but that scoundrel Meyer has absconded with the entire fleet back in 978. It is time to assume our position as the sky's rulers.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "09675-c89009753a13",
+    "text": "As knowledge of the dangers aircraft poses becomes apparent, bombing raids are becoming increasingly dangerous and uncertain to succeed. The solution lies in redesigning our aircraft to fly higher, above the range of anti-aircraft defences, where they can deliver their payload with impunity. Costs and effectiveness will have to be considered, however, but we are certain that a fleet of these bombers could wipe a city off the map in a single day.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "09767-3c539489f393",
+    "text": "The newspapers and radio broadcasts are spreading wild hysteria with their biased reporting, showing us as tyrannical murderers of children while the protesters are being whitewashed and absolved of their crimes. Free speech is a dangerously radical policy that could convince the gullible masses to rise up in revolt. We have no choice but to silence the rabblerousing journalists and promote those who remain loyal.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "11488-9355a4b10769",
+    "text": "What do creatures that aren't sirens deserve? Absolutely nothing, that is what. They have proven time and time again to appreciate nothing, banishing us, shunning us and even managing to break our partnership. Any notions of value their lives have past serving a siren is ludicrous. They are to be used, played with and cast aside when they have served their purpose. Is having the privilege of being controlled by a siren not enough, anyways?",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "12014-6c471c1b3c48",
+    "text": "Already we receive reports of bandits and agitators poisoning the countryside with their depredations, so it is fitting that we who devote ourselves to diligence and struggle should restore the peace. However, the land is vast, and we have but few capable administrators among the dervishes. We must put our trust in those unfamiliar to us, and hope that we who know the Way may also be good judges of the heart.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "12026-ef0f1656eb58",
+    "text": "Among the warriors of the yeti horde are those mysterious silent giants we know only as \"Storm Creatures\". As mighty as they are in battle, we know little of their ways, but the wisest among the dervishes can perceive that their gaze often looks beyond this world. The hidden knowledge they have of things permanent and immaterial might be of great benefit to many, if we can get these creatures to say a word.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "12052-a41b2ca44853",
+    "text": "At the border between Hyenia proper and the old yeti lands, the state of Zpasu is mostly desolate, not least because of the depredations of the Storm King's forces. The land is suboptimal for zebras, its traditional inhabitants, but meanwhile many hyenas of the underground are seeking a new home beneath the sunlight. It is fitting, then, that we encourage them to settle this land, and make it prosperous.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "12604-00db327da3c5",
+    "text": "In order to improve our urban economic output, some members of the MPA, styling themselves as \"National-Syndicalists\" have recommended implementing a program of state-sponsored unions in order to improve working conditions while still retaining control over the economic process to serve the state. While some more traditional members call this \"Communist,\" we are more than happy to embrace this idea.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "12800-4b6eab6ac156",
+    "text": "Communication across Griffonia was easy in Imperial times. Imperial runners would transmit messages, and local telegraphs would service urban areas. However, we are in a new age of invention, and with the tools of modern technology at our fingertips, there exists a new vision for communication; the possibility of allowing all the griffons under the tricolor to communicate with one another at a moment's notice. What could be a more excellent representation of the Griffonian dream?",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "12809-e5d7a81b85ff",
+    "text": "The core of Pan-Griffonian ideology is that a republic can only survive on Griffonia if it covers the whole continent. Only bound together in republican brotherhood can we survive, and without it, we fall. Griffonstone, the home of all griffonkind, is the second great piece in this Pan-Griffonian puzzle. Without it, can we even call ourselves a republic of all griffons? Thus, we must liberate the cradle of griffonkind, for all of griffonkind. ",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "13095-4f9a0fb1c06a",
+    "text": "The mines of Andorstadt now supply the capital with a steady source of iron, and the abundance of the material supplied by the mines has given the industrialists of the Katerintreue an idea. A steel works within the capital would be the most advanced building in the entire principality, and a drain on the treasury. But the long term advantages provided by such a building far outweigh the initial cost of constructing it.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "14010-e8b48af3e886",
+    "text": "Since the establishment of the International City of Fragrance, anti-government activity has continuously plagued our administration. We have allowed these malcontents to undermine our authority for long enough! The leading agitators have been identified, and we have prepared an operation to neutralise them. With any luck, it will calm things down and bring some much-needed stability to the city.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "14340-5a0e3405f55c",
+    "text": "The welfare state is a relatively new concept, where the state takes the responsibility to provide for its citizens. This has been mostly a sphere of the Temples through most of history, but Alaric now believes its time to establish a caring state in Rumare, providing public services and benefits and complementing the already existing education act and family subsidies. We'll have to raise some taxes, but its worth the cost.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "14717-2848ac8f9f3e",
+    "text": "The Griffon west is an active civilization of efficiency and ambition. After all, the griffons have forged great realms by the dozens, while only a couple great empires rose in the east. Furthermore, even in a state of collapse, their technology and industry is still superior to what Riverlanders possess, despite a veritable golden age. But they lack spirituality and thus we will descend on them, and we will ignite their spirits.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "14720-287b7ae51be4",
+    "text": "The griffon civilization is a great one indeed, but they do lack spirituality and empathy. After all they are known as one of the greediest and selfish races. Not even mentioned how they have to be forced to worship the very gods that made them. We will nullify this egoism and balance out the inherent ambition and greed of the west with the spirit and feeling of the east, thus \"completing\" the griffon race.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "15042-b991479d52c5",
+    "text": "With my enemies defeated, and order restored in my city, I can now make Las Pegasus a shining beacon of progress, technology, science, and prosperity. Instead of the thuggishness of fascist rule, the radical destructiveness of communism, or broken squabbling ineffectiveness of harmonic democracy, it will be the true strength of technocracy that will reign. The intelligent elite will rule and it will be ruled by science and logic.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "15390-5f267a07705a",
+    "text": "The best and/or worst thing about Changelings is their ability to be anything, anyone, and anywhere. They are natural infiltrators, and even more natural saboteurs and spies. This preternatural ability served us well in the war, and shall serve us well in our victory. Commander Soryn, who in the war had led one of our best infiltrator divisions, has come to share with us her expertise - and she's bringing her boys along too.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "15516-854bb7f4d453",
+    "text": "The Creeper Mountain state was the furthest inland the old Asterionese Confederation ever got, and the minotaurs who lived there were a hearty group, bravely guarding the frontier of Asterion from foreign invaders. Years of Imperial plundering of the mines followed by occupation by a bandit army has left the land in ruins. The minotaurs who remain greet us with open arms as liberators, and it is our duty to aid them.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "15531-5421678d196c",
+    "text": "For many years now smokeless powder has been the standard propellent of almost every single firearms cartridge in civilian hands, but the standard infantry weapons of the military have yet to advance in the time since the Fall of The Empire and the succession wars that followed. It's time for the continuing resolution and deadlocked committees to end. The military needs modern firearms, and it needs them now.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "15581-b98ebe753d83",
+    "text": "In recent years there has been a movement to formalize our alliance with our democratic amigos in Sicameon to allow for military and logistic cooperation. In a world filled with monarchs, dictators, and evil wizards, it is argued, the free peoples of the world need to band together for defense against those who would see them as slaves. The Concordat of Free Nations will evolve to become that band, and together we happy few shall make the world safe for liberty.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "15914-424be39433b3",
+    "text": "While scant few remnants of the old Vault-Tec survived the nuclear exchange, some examples of our technology made it out of the Gateway and into Equestria. Indeed, some very enterprising ponies with some very bright ideas have decided to start up their own company based on Vault-Tec, Stable-Tec. The results they are currently delivering show promise and an offer to co-opt them should be extended as soon as possible.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "16192-d062b85e6ad0",
+    "text": "The frigid northern coast of Equus is home to polar bears and penguins, both of which have weak nations unable to resist foreign rule. The northern sea lanes are economically important and need to be under Lunar protection. Not to mention the fact that our Empress cannot claim to control all of Equus without taking these frozen backwater territories. Her rule must reach even the furthest corners of the continent.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17370-63cd22a8f55a",
+    "text": "With the final act of massively centralizing Wesslandia under the direct authority of Princess Eira, the entire country has in many ways become a splitting image of the Crystal Empire. The Princess has complete control over her domain, that of a massive city by bear standards, with the rest purposely neglected for their own benefit. Eira's commands may not carry far anymore, but where they do, they are law.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "17521-5b4070614d9d",
+    "text": "Volsungr, even with all the events of the past is still a great clan in its own right, and not one to be easily trifled with. They have come with a serious request, to be allowed to spread the knowledge they have gained over the years of exiles to the rest of the bear clans and teach them their own knowledge. Torben may not agree with it or the sources of their knowledge, but some concessions must be made to maintain peace.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17524-dbd346f437b8",
+    "text": "Whelps have never been particularly respected in the clans due to having no use in society. They are weak, unfit to be a warrior. But that is changing, as now only they with their small size are able to use the new tanks and weapons of war we have created. Force has proven an effective means of reaching equality, and with whelps fighting side by side with warriors in their tanks, that equality has finally been achieved.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17526-f15bf880308c",
+    "text": "An issue has arisen involving the Wesslandians, one that we must arbitrate personally. Many bears, those of Volsungr chief among them believe that the Wesslandians can not be trusted to rule themselves and must bend the knee to another, in this case Princess Eira. They do make a compelling case, and yet allowing one clan dominance over others goes against the traditional ties of tyrant and lesser, as well as our idea of unity. Still, a choice must be made...",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17573-ba525e0cba38",
+    "text": "Is one truly strong if they mock those absurdly below them? It is perhaps strange that it took us so long to realize, but no. There is no true strength in demeaning those so far beneath us. Perhaps we have committed a great transgression by acting upon such impulses before and allowing clans to abuse whelps, serfs, and griffon slaves. But no more! Those that are weak shall be protected from the evils and sufferings of the world forever more!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17574-9a4e05bb6335",
+    "text": "Not all are weak and unable to cope with the horrors of the world of course, there are always great creatures among the populace, those that laugh into the face of adversity and match the horrors of the world with their own might. Our army shall be forged from such great warriors and champions, invoking the great days of Age of Starsteel. Perhaps that will limit our numbers, yet what are odds to an ursine that is truly great?",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17576-85bc90d84aa5",
+    "text": "Not by desire to oppress we enforce the vision of society that is hierarchical, based on strength of body and mind. We are merely showing those within our realm and the world what is truly natural and arguably even truly harmonic perhaps. For what could be more harmonic than how nature itself is structured? And when all those within our realm understand that, they will rejoice in the beauty of naturality.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "17739-5707cca0cfa2",
+    "text": "From what we have learned, the ursines of the portal dimension are in grave danger. The denizens of the planet there have pushed back our proud brothers to the edges of the world like we have been, and even have the audacity to keep them in zoos. This insult will not stand; we will teach them how to break the chains placed upon them so that they may rise up and fulfill their destinies in creating their own Hyperbearia!",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "17874-8efa1a097ca2",
+    "text": "Communist parties in our Kingdom were bigger then we originally thought, and even though our current prisons could house all of the new prisoners, it would be a risky move seeing how they could try to sway other prisoners to their cause. But, cold Talamh Árd Massif houses a few rich iron deposits. Sadly, it wouldn't be too smart to send our normal citizens there, so instead we could just use our new prisoners to work there.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "18939-54f2628563ae",
+    "text": "While the merchants of the Western Griffonian nations largely sit atop their accumulated wealth scheming only on how to acquire more of it, the merchant class of Sicameon have long held a tradition of outgoing charity. In this modern age, these traditions should be expanded to that of philanthropy: to eliminate the source of the issues and advance our nation as a whole, rather than only alleviating the suffering.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "19088-0fe517424cc0",
+    "text": "Sicameon up until this point has never had a national arms factory, as with most other functions of government we have always deferred arms and equipment production to city armories, and more recently, indigenous arms companies such as Estrella. In our bid to increase federal level military capability and self reliance, we should establish a national armory to fulfill the equipment needs of the Guardia Nacional.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "19090-cffe1ba59fb5",
+    "text": "The nation's navy has historically been far more unified than the parish militias and the Guardia Nacional, because the founding Five Cities were the only entities wealthy enough to fund naval projects, and they all shared the mutual goal of fending off raiders and pirates from the very beginning. Still, the Armada Nacional is divided along the lines of the old city flotillas, these old systems should be replaced to promote unity, end city rivalries, and ease administration.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "19094-fa8b88917527",
+    "text": "Queruscos has long held the title to have both the finest and the most productive heavy shipyards within the federation. Historically, the city arsenal created an innovative proto-assembly line system that could create an entire ship within a day, where other cities could take weeks and other nations months. Such a legacy of industry should be upheld by expanding and modernizing the cities shipbuilding facilities further.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "19106-cb837cce4e0d",
+    "text": "Many of the younger officers who have grown up with the latest innovations of mechanized flying machines have proposed the idea of creating a ship that is in essence a floating airfield. The concept has already been proven overseas in Equestria and by the Empire before it had collapsed on itself, and we have concluded some of our own first tests of launching aircraft off of an armed warship successfully. Despite the skepticism of some of our older officers, such a dedicated ship might prove to be a potent weapon in the future",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "19128-0926bbbc1a28",
+    "text": "Collaborating with our younger naval officers, our aviation staff have pushed the idea of deploying combat squadrons from specially designed ships that act essentially as floating mobile airfields. The ability to project airpower in such a way is undoubtably a very powerful one, and is also being explored by foreign powers. Resources permitting, we should experiment with adapting aircraft and ships to such a task.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "20079-8c01d5f4d14d",
+    "text": "Twilight Sparkle, Equestrian Princess of Friendship resides in Ponyville, and the travels of Sugar Belle and Feather Bangs have seen them returning with some of her publications. With the blessing of Feather Bang as leader, ponies have begun to study her works and consider how it could be implemented. Feather Bang's first act has been to rename Our Town to the more friendly, Ponyville inspiredm Townsville.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "20175-d457f573bf56",
+    "text": "Soon the time will come to breakaway from Gabriela's regency and pledge our full and public support to the Archon's cause. While we are far from his power base in the south, our forces will prove a valuable asset in opening up a two-front war against the corrupt nobles in Griffenheim. We love thee Gabriela, but we love our gods more. For now, our entire nation is in line with the Archon's values and Eagleclaws influence is all but gone!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "21692-16280b411aa1",
+    "text": "Though we have previously relied on imports to feed Skyfall, with our growing population we should look to reducing our reliance on foreign produce. The fertile and (relatively) unexploited lands in the rural areas around our cities are perfect for this. While they are currently occupied by inefficient family farms, we could aggressively buy up their land to create more efficient federal farmland, perfect to feed our growing city.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "21991-e3417a7d27ba",
+    "text": "In 747, Emperor Grover I famously crossed the Creeper Mountains, catching the eastern principalities by surprise and subjugating them with ease. Two years later the Zaphzans of Gryphia were offered to become an Imperial March, which they wisely accepted. But like all other subjects, they too betrayed us and declared independence or simply drifted away from Imperial rule. It is time we reassert our dominance.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22019-2e135a013a9f",
+    "text": "With many of the labs inside the city dealt with, it is time to deal with the higher-ups within this criminal hierarchy- first, those above the dealers. While many pushers lost their sources during our raids on the labs, some still important from more rural areas or even other countries, selling their products to dealers within the city itself. We must deal with these sources as well if we are to truly destroy this criminal network plagueing our city.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22026-561bd4564c73",
+    "text": "The Handelsraad has long dominated the concerns of our government- a council composed of representatives from the various prominent business sectors of our nation, all vying for the government's support. While this allowed for government and business to work together in the past, it also allowed business far too much power in the political sphere- and with our recent dissolution of the monopolies that formerly domianted the nation, we should furthermore destroy the tool with which they gained so much power.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22035-b48a7ee68012",
+    "text": "While much of Griffonia lies under the tyrannical claw of reactionary monarchs, upstart tyrants or fanatical revolutionaries, Skyfall is truly a free nation. One of the greatest triumphs of this freedom is our openness to immigrants- we are known as one of the most open places in the world, where all are welcome to come and start a new life. With open tracts of land in the countryside and plenty of jobs in our cities, new citizens from across the world flock to our nation to start a new life.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22038-df89e9ef7e97",
+    "text": "We have finally done it- under the chancellor's guiding claw, Skyfall has transformed from a despotic autocracy puppeteered by capitalists into a modern state with a robust government and welfare programs, which lives to serve the people, rather than to serve their capitalist masters. We can now once and for all proclaim Skyfall the home of the free, a true land of liberty within the dark storm of oppression which covers Griffonia!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22306-e9b4dabc2d8b",
+    "text": "The democratic nation of Aquileia is a cornerstone of liberty and harmony, a nation of true believers in freedom and equality. And yet their institutions are still young, not having had the development that centuries has given Vedina. Their knights are rookies with rusted rifles and pig iron armor. To make sure that they live on and that the teachings of democracy do as well, we must send them help and teachers.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22307-644fa7780cad",
+    "text": "The Griffonian Republic is a nation of democracy, one that has thrown off the imperialist yoke of the Empire and reinvented itself as a nation of liberty, where the people's wishes are listened to and where their wants and needs are tended to. But in the south, the Empire is rising once more. The shambling corpse rebuilding itself and coming back to enslave us all for a forlorn dream. We must send the Republic knights and teachers and help them to defend!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22308-8ed2c06aeb00",
+    "text": "Today, the streets feel a little safer. The air smells slightly cleaner. The lights of Vedina look more vibrant. Shiny knights patrol, rifles ready, uniforms ironed, cuffs polished. In the face of so much adversity, Vedina's tradition of knighthood remains strong and forever adapting. All eyes watch the nation's royal guardsmen, the knight corps, the frequent tournaments. A beacon of modern chivalry in a sea of forgotten traditions.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22312-d689ca1e3d87",
+    "text": "\"The pointy end - you use the pointy end.\" Our Nova Griffonian friends have much to learn from our way of knighthood. Separated from the mainland for so long, their culture has grown stagnant. No fret, though. Now that our relationship has improved once again, we may catch them up with the forms of traditions that they have lost. Knight-Errants, Royal Knights and gleaming tournament champions are already on their way to Nova Griffonia to begin teaching a new generation of knights.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22333-8ff112651a95",
+    "text": "The princess has changed. No longer does she speak of valour or chivalry, and any limited reforms she had put in were pulled back. Her demeanor has changed. Now she snaps at others, lacks patience and wants everything done her way or you will be gifted a nice lead bullet to the head. The good she had in her has long since been corrupted. And now she speaks of cleaning up Vedina, both through the politics. And the people.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22338-62060327d6b5",
+    "text": "The resurgent Griffonian Empire grows like a tumour over the continent, driven by the urge to relive the bygone days of the old empire. As its soldiers storm its surrounding countries to restore glory which never truly existed, it's becoming clearer and clearer that, unless stopped, they will soon come knocking on Vedina's door. We must cut out this cancer before it spreads, and strike before they become unstoppable. We will avenge our forefathers and do today what they couldn't so many years ago. We will end the scourge of the Griffonian Empire for good.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22348-7c9c4cbf9945",
+    "text": "Should Vedina find itself pulled into war on the continent, we make sure we are prepared. Our industry is not yet ready for a complete and total conversation to war-time production and for the absolute mobilization of the available workforce. If Vedina hopes to survive, it must make sure its people are ready to pour everything they have into pure, undeniable victory - not necessarily on the battlefield, but on the production front, in the fields and farms, in the laboratories, in the skies and on the seas. Vedina must prepare for the storm, or else be swept away.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22350-2d2c292e2137",
+    "text": "Vedina's coasts have always been blessed in a way that they've never been attacked. Not in all of our wars has the enemy thought to land on our beaches. But that is no reason to grow content - comfort breeds weakness, and a sufficiently cunning enemy will see the soft underbelly of our coastline and think to attack. Therefore, we must begin creating proper defenses along the sea, a coastal wall will protect Vedina from seafaring invaders.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22351-97c83ad48659",
+    "text": "The Knights of Vedina have completely abandoned the use of swords in duels. The era of true knighthood, of honourable single combat, thrilling sword fights and the code of chivalry is long gone, lost in the smoke of a pistol. Disputes are now solved quickly with guns as opposed to lumbering, heirloom swords. This lack of honour is now spreading to the battlefield as well. Why fight the enemy fairly when you can simply blow them to smithereens?",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22367-0124ff2a2e42",
+    "text": "The inefficiency of port airstrips that support our navy has been proven time and time again as by the time our planes arrive to the naval battles taking place they are naught but over, to truly get the aerial support we need to have a strong navy we must make ships that are themselves airstrips. The idea of an aircraft carrier has long been thrown around in the global spheres of naval thought its quite time for us to make that idea a reality.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22796-611fe5e86e24",
+    "text": "\"Over the years, there have been many ways to become a member of the Witenagemot, such as being qualified for it with magical talent, being hoof-picked by the monarch or simply inheriting the position. Now, there will be only one way to gain the esteemed title of Witan: Winning elections. What was once an exclusive council of nobles will now become open for all who can earn the favour of the common ponies.\"",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "22981-cf11aa6c6d38",
+    "text": "'Past governments have not been able to get us out of the economic slump, that much is true. But the conservatives were the ones stopping reforms to the labour market to ensure you would all earn a living wage, and now they'd rather throw in their lot with Beakolini than pay you what you are due! Sweep them aside in the upcoming battle, and a new democratic government will deliver for every griffon in Wingbardy!'",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "23052-23124931398c",
+    "text": "With the death of Grover V, the Archon of Boreas Eros VII has taken charge as the regent of the Empire. While the rise of a fellow religious leader would normally be cause for celebration, the Archon has made it abundantly clear that the full restoration of the Empire is his only goal, which includes the destruction of Wingbardy as a nation. We must not stand for this, and denounce him to take charge of our own destinies!",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "23103-5364de492f4c",
+    "text": "The Karthinian Empire was the predecessor of Wingbardy which once ruled southern Griffonia. Karthinia was the strongest successor state to the Kingdom of Sparléos and every Wingbardian dreams to relive those glory days. Now that our borders once again encompass most of the ancient lands, Wingbardy can rightfully lay claim to the legacy of her ancestors. We can proudly reclaim the glory of the Karthinian Empire!",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "23159-296b2efc1e70",
+    "text": "The large city of Falcor has been a relatively recent conquest from the Falcor War, but is still a large economic contributor. It is therefore unacceptable that the city hasn't been integrated into the Wingbardian rail network. We must start treating the city as the integral part of Wingbardy it is. And if somegriffon questions that status, we will be able to more easily deploy troops to crush that challenge.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "23552-7b2311ed03a1",
+    "text": "The Faculty of Social Sciences is well aware of the plight of the working class in most of Griffonia, along with previous attempts at revolution. With increased funding from the central government, the Faculty will be able to develop a social policy that will make Yale strong in these turbulent times. In secret, the Faculty seeks to undermine the government's legitimacy, preparing the stage for revolution.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "23555-8df91eed89a2",
+    "text": "The soldiers that fought alongside the revolutionaries are brave souls, but their services are no longer required. Every individual is responsible for the safety of their own communes and for the revolution as a whole. We ought to establish voluntary militias with elected officers. Naturally, if anygriff finds their orders objectionable, they may refuse to carry them out. Who could defeat an army of truly free souls?",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "24273-09ed3ee9b54b",
+    "text": "Ever since Sinóra's times, old castles have laid abandoned across Kása. Formerly seen as symbols of oppression, teams of archeologists, builders and representatives of the Ministry now travel across Kása to evaluate their current condition. Those that are found fit enough will be restored to act as hotels and other attractions for those seeking to live like the Wittenlandic nobles of the past. Even if only for a few days.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "24276-8027c3004979",
+    "text": "Only one step in our plan remains, as designed by Bicoafi: a massive advertisement campaign in Macawia and Griffonia about the wonders that Kása has. While the main focus will be upon rich visitors, part of the campaign will also be the affordability of trips designed for average working-class families. These budget holidays, carefully designed to be cost-effective, offer a chance for tourism at a scale not yet seen.",
+    "expected_overflow": false
+  },
+  {
+    "case_id": "24343-60f2650dc0b4",
+    "text": "As the magic regulations were being rolled out, Yrmthu pondered a great deal on how to make them work and endure on the long-term. This lead her to design a new project, one of a mandatory school dedicated to educating magic users in the proper way of practicing it and administrating the granting of magic licences. Such a place would likely be special and complex to manage. But Kása is full of able creatures.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "24344-8ee090ee3215",
+    "text": "As we empowered local communities, we cannot just let them struggle on their own. Rather, we ought to figure out a new common social contract, not one directed from the top but stemming from the grassroots. In the end, we are all in this together, just like the slaves of the D'Vash once were. The confederal government must be able to offer its help and advice and help instill a spirit of cooperation. If one fails, we all do.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "24346-c9d469cf2409",
+    "text": "As the Second Congress finishes its work, it is time for First Commander Yrmthu to address it in a closing speech. There are great expectations after so many accused her of doing nothing and shifting blame to others. But she'll rise to the occasion. For to lead is not to project eternal and constant strength but to take responsibility. It is about the common good and there is only shame in not correcting a mistake.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "24393-8c121736b95a",
+    "text": "As terrible as the idea is, there may be a day when the Sun-spangled Flag won't fly over our cities, when oppressors would rule us again. And should this happen, we must prepare the resistance so that hope can remain. We will form secret groups of local civilians trained to fight a guerrilla war against any enemy force with weapons cache and secret paths. If we are denied peace, we will make our oppressors' life unbearable.",
+    "expected_overflow": true
+  },
+  {
+    "case_id": "11886-1fc0841297c2",
+    "text": "Traditionally the production of everything from fine wine to bandages to wagon wheels has been handled by artisans. While this can be beneficial in terms of quality it is far less efficient in terms of quantity.\n\nIn comes factories, facilities which allow for a sea of unskilled labour to become an effective machine.",
+    "expected_overflow": false,
+    "expected_lines": [
+      "Traditionally the production of everything from fine wine to bandages",
+      "to wagon wheels has been handled by artisans. While this can be",
+      "beneficial in terms of quality it is far less efficient in terms of quantity.",
+      "",
+      "In comes factories, facilities which allow for a sea of unskilled labour",
+      "to become an effective machine."
+    ]
+  }
+]

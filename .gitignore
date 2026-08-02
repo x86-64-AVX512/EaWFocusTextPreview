@@ -1,0 +1,39 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE and OS files
+.idea/
+.vscode/
+.vs/
+.DS_Store
+Thumbs.db
+*.user
+*.suo
+
+# Build output
+build/
+dist/
+release/
+notepadpp_plugin/build/
+notepadpp_plugin/dist/
+*.exe
+*.dll
+*.exp
+*.lib
+*.obj
+*.pdb
+*.res
+*.zip
+*.sha256
+
+# Local runtime state and diagnostics
+settings.json
+*.log
+preview-smoke.png
+working_*.png

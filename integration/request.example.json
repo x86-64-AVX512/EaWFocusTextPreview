@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "key": "example_focus_desc",
+  "title": "ПИОНЕРЫ",
+  "description": "Армия: §Y+5%§! Attack",
+  "effect": "Произойдёт событие.",
+  "glyph_priority": "ru",
+  "policy": "visual",
+  "dynamic_localisation": false,
+  "show": false
+}
