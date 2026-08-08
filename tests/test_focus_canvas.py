@@ -10,6 +10,7 @@ from eaw_focus_preview.focus_canvas import (
     DESCRIPTION_LATIN_LAYOUT_WIDTH,
     DESCRIPTION_WIDTH,
     FocusCanvas,
+    preview_target_geometry,
 )
 
 
@@ -21,6 +22,45 @@ def _layout_lines(canvas: FocusCanvas) -> list[str]:
         "".join(glyph.character for glyph in line.glyphs)
         for line in canvas._description_layout.lines
     ]
+
+
+def test_preview_keeps_one_to_one_physical_pixels_at_common_dpi() -> None:
+    for device_pixel_ratio in (1.0, 1.25, 1.5, 2.0, 10.0):
+        target, physical_scale = preview_target_geometry(
+            700,
+            650,
+            device_pixel_ratio,
+        )
+
+        assert target.width() * device_pixel_ratio == 550
+        assert target.height() * device_pixel_ratio == 550
+        assert target.left() * device_pixel_ratio == round(
+            target.left() * device_pixel_ratio
+        )
+        assert target.top() * device_pixel_ratio == round(
+            target.top() * device_pixel_ratio
+        )
+        assert physical_scale == 1.0
+
+
+def test_preview_only_downscales_when_physical_space_is_too_small() -> None:
+    target, physical_scale = preview_target_geometry(330, 300, 1.25)
+
+    assert target.width() * 1.25 == 375
+    assert target.height() * 1.25 == 375
+    assert physical_scale == 375 / 550
+
+
+def test_preview_target_handles_invalid_or_extreme_dpi() -> None:
+    invalid_target, invalid_scale = preview_target_geometry(550, 550, 0.0)
+    huge_target, huge_scale = preview_target_geometry(330, 330, 1000.0)
+
+    assert invalid_target == preview_target_geometry(550, 550, 1.0)[0]
+    assert invalid_scale == 1.0
+    assert huge_target.width() == 0.55
+    assert huge_target.height() == 0.55
+    assert huge_target.width() * 1000 == 550
+    assert huge_scale == 1.0
 
 
 def test_game_visual_atlas_cannot_change_russian_wrapping(qapp) -> None:

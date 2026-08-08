@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import ceil
+from math import ceil, floor, isfinite
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import (
@@ -119,6 +119,47 @@ EFFECT_X = 50
 EFFECT_Y = 397
 EFFECT_WIDTH = 455
 EFFECT_HEIGHT = 138
+
+
+def preview_target_geometry(
+    widget_width: float,
+    widget_height: float,
+    device_pixel_ratio: float,
+) -> tuple[QRectF, float]:
+    """Return a device-pixel-aligned target and its physical image scale.
+
+    The preview is a 550x550 raster whose pixels represent the game's pixels.
+    Qt widget coordinates are device-independent, so drawing it into a
+    550-logical-pixel rectangle at 125% would resample it to 687.5 physical
+    pixels.  Work in physical pixels first and convert the aligned rectangle
+    back to Qt coordinates.  This keeps a 1:1 mapping whenever the widget has
+    enough room and only permits downscaling when it does not.
+    """
+    dpr = (
+        float(device_pixel_ratio)
+        if isfinite(device_pixel_ratio) and device_pixel_ratio > 0
+        else 1.0
+    )
+    physical_width = max(0.0, float(widget_width) * dpr)
+    physical_height = max(0.0, float(widget_height) * dpr)
+    target_physical_size = min(
+        float(CANVAS_SIZE),
+        float(floor(min(physical_width, physical_height))),
+    )
+    if target_physical_size <= 0:
+        return QRectF(), 0.0
+
+    # Integer physical origins prevent one-pixel details (especially periods
+    # and glyph outlines) from landing between screen pixels.
+    left_physical = round((physical_width - target_physical_size) / 2.0)
+    top_physical = round((physical_height - target_physical_size) / 2.0)
+    target = QRectF(
+        left_physical / dpr,
+        top_physical / dpr,
+        target_physical_size / dpr,
+        target_physical_size / dpr,
+    )
+    return target, target_physical_size / CANVAS_SIZE
 
 
 @dataclass(frozen=True, slots=True)
@@ -392,24 +433,17 @@ class FocusCanvas(QWidget):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(20, 23, 22))
         preview = self.render_preview()
-        # При наличии места показываем честные 550×550 экранных пикселей.
-        # На небольшом экране разрешено только уменьшение, внутренняя система
-        # координат при этом всё равно остаётся 550×550.
-        scale = min(
-            1.0,
-            self.width() / CANVAS_SIZE,
-            self.height() / CANVAS_SIZE,
+        self._target_rect, physical_scale = preview_target_geometry(
+            self.width(),
+            self.height(),
+            self.devicePixelRatioF(),
         )
-        width = CANVAS_SIZE * scale
-        height = CANVAS_SIZE * scale
-        left = (self.width() - width) / 2
-        top = (self.height() - height) / 2
-        self._target_rect = QRectF(left, top, width, height)
         painter.setRenderHint(
             QPainter.RenderHint.SmoothPixmapTransform,
-            scale < 1.0,
+            physical_scale < 1.0,
         )
-        painter.drawImage(self._target_rect, preview)
+        if not self._target_rect.isEmpty():
+            painter.drawImage(self._target_rect, preview)
         painter.end()
 
     def render_preview(self) -> QImage:

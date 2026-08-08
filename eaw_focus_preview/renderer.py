@@ -7,6 +7,29 @@ from .bmfont import FontFamily
 from .layout import TextLayout
 
 
+def ellipsis_visual_offsets(text: str) -> tuple[int, ...]:
+    """Slightly separate the three period bitmaps without changing layout.
+
+    In ``hoi_18mbs`` a period is wider than its xadvance.  Three consecutive
+    copies therefore overlap enough for their soft outlines to merge.  The
+    game metrics must remain untouched because they determine wrapping, so
+    only the raster positions are spread symmetrically by one pixel.
+    """
+    offsets = [0] * len(text)
+    index = 0
+    while index < len(text):
+        if text[index] != ".":
+            index += 1
+            continue
+        run_end = index + 1
+        while run_end < len(text) and text[run_end] == ".":
+            run_end += 1
+        if run_end - index == 3:
+            offsets[index : run_end] = (-1, 0, 1)
+        index = run_end
+    return tuple(offsets)
+
+
 class BitmapTextRenderer:
     """Рисует BMFont-глифы без участия системных шрифтов."""
 
@@ -26,13 +49,16 @@ class BitmapTextRenderer:
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
 
         for line_index, line in enumerate(layout.lines):
+            period_offsets = ellipsis_visual_offsets(
+                "".join(item.character for item in line.glyphs)
+            )
             cursor_x = (
                 x + (width - line.width) / 2.0
                 if align == "center"
                 else x
             )
             line_top = y + line_index * layout.line_height
-            for item in line.glyphs:
+            for item_index, item in enumerate(line.glyphs):
                 if item.font is not None and item.glyph is not None:
                     glyph = item.glyph
                     visual = layout.visual_metrics.get(item.character)
@@ -66,7 +92,7 @@ class BitmapTextRenderer:
                         and render_glyph.width
                         and render_glyph.height
                     ):
-                        draw_x = cursor_x + (
+                        draw_x = cursor_x + period_offsets[item_index] + (
                             visual[2]
                             if visual
                             else render_glyph.xoffset * render_scale

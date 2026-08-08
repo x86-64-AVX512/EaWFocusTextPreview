@@ -26,7 +26,7 @@ void show_usage() {
         L"зажмите Alt и дважды щёлкните левой кнопкой мыши "
         L"внутри текста в двойных кавычках.\n\n"
         L"Других способов отправки плагин не добавляет.",
-        L"EaW Focus Bridge 0.7.6F8",
+        L"EaW Focus Bridge 0.7.6F9",
         MB_OK | MB_ICONINFORMATION
     );
 }
@@ -86,7 +86,7 @@ void show_error_once(const wchar_t* message) {
     MessageBoxW(
         notepad_data._nppHandle,
         message,
-        L"EaW Focus Bridge 0.7.6F8",
+        L"EaW Focus Bridge 0.7.6F9",
         MB_OK | MB_ICONERROR
     );
 }
