@@ -326,19 +326,122 @@ class FontFamily:
         return None
 
 
+def _registry_values(
+    locations: Iterable[tuple[object, str]],
+    value_names: Iterable[str],
+) -> list[str]:
+    """Читает строковые значения реестра Windows без записи в него."""
+    try:
+        import winreg
+    except ImportError:
+        return []
+
+    views = (0, winreg.KEY_WOW64_32KEY, winreg.KEY_WOW64_64KEY)
+    values: list[str] = []
+    seen: set[tuple[int, str, int]] = set()
+    for root, key_name in locations:
+        for view in views:
+            lookup = (int(root), key_name.casefold(), view)
+            if lookup in seen:
+                continue
+            seen.add(lookup)
+            try:
+                with winreg.OpenKey(
+                    root,
+                    key_name,
+                    0,
+                    winreg.KEY_READ | view,
+                ) as key:
+                    for value_name in value_names:
+                        try:
+                            value, _ = winreg.QueryValueEx(key, value_name)
+                        except OSError:
+                            continue
+                        if isinstance(value, str) and value.strip():
+                            values.append(value.strip())
+            except OSError:
+                continue
+    return values
+
+
+def _deduplicate_paths(paths: Iterable[Path]) -> list[Path]:
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        key = str(path).replace("/", "\\").rstrip("\\").casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(path)
+    return unique
+
+
+def _registry_steam_roots() -> list[Path]:
+    """Возвращает корни Steam из стандартных read-only ключей реестра."""
+    try:
+        import winreg
+    except ImportError:
+        return []
+
+    locations = (
+        (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
+        (winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam"),
+        (winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Valve\Steam"),
+    )
+    roots: list[Path] = []
+    for raw_value in _registry_values(
+        locations,
+        ("SteamPath", "InstallPath", "SteamExe"),
+    ):
+        path = Path(raw_value.replace("/", "\\")).expanduser()
+        roots.append(path.parent if path.suffix.casefold() == ".exe" else path)
+    return _deduplicate_paths(roots)
+
+
+def _registry_game_roots() -> list[Path]:
+    """Читает InstallLocation Steam App 394360, если он зарегистрирован."""
+    try:
+        import winreg
+    except ImportError:
+        return []
+
+    uninstall_key = (
+        r"Software\Microsoft\Windows\CurrentVersion\Uninstall"
+        r"\Steam App 394360"
+    )
+    wow_uninstall_key = (
+        r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+        r"\Steam App 394360"
+    )
+    locations = (
+        (winreg.HKEY_CURRENT_USER, uninstall_key),
+        (winreg.HKEY_LOCAL_MACHINE, uninstall_key),
+        (winreg.HKEY_LOCAL_MACHINE, wow_uninstall_key),
+    )
+    return _deduplicate_paths(
+        Path(value).expanduser()
+        for value in _registry_values(locations, ("InstallLocation",))
+    )
+
+
 def find_game_fonts_directory() -> Path | None:
-    """Находит базовые шрифты HoI4 без обращения к реестру Windows."""
+    """Находит базовые шрифты HoI4, читая пути Steam в том числе из реестра."""
     install_override = os.environ.get("HOI4_INSTALL_DIR")
     candidates: list[Path] = []
     if install_override:
         override = Path(install_override).expanduser()
         candidates.extend((override, override / "gfx" / "fonts"))
 
+    for game_root in _registry_game_roots():
+        candidates.extend((game_root, game_root / "gfx" / "fonts"))
+
     steam_roots: list[Path] = []
     for variable in ("ProgramFiles(x86)", "ProgramFiles"):
         value = os.environ.get(variable)
         if value:
             steam_roots.append(Path(value) / "Steam")
+    steam_roots.extend(_registry_steam_roots())
+    steam_roots = _deduplicate_paths(steam_roots)
     for steam_root in tuple(steam_roots):
         library_file = steam_root / "steamapps" / "libraryfolders.vdf"
         try:
@@ -350,6 +453,8 @@ def find_game_fonts_directory() -> Path | None:
             continue
         for match in re.finditer(r'"path"\s+"([^"]+)"', library_text):
             steam_roots.append(Path(match.group(1).replace("\\\\", "\\")))
+
+    steam_roots = _deduplicate_paths(steam_roots)
 
     for steam_root in steam_roots:
         candidates.append(
@@ -385,9 +490,18 @@ class FontRepository:
         self,
         fonts: dict[str, BitmapFont],
         visual_fonts: dict[str, BitmapFont] | None = None,
+        *,
+        game_fonts_directory: Path | None = None,
+        game_fonts_load_error: str | None = None,
     ):
         self.fonts = fonts
         self.visual_fonts = visual_fonts or {}
+        self.game_fonts_directory = game_fonts_directory
+        self.game_fonts_load_error = game_fonts_load_error
+
+    @property
+    def original_game_fonts_available(self) -> bool:
+        return bool(self.visual_fonts)
 
     @classmethod
     def load(cls, fonts_dir: Path) -> "FontRepository":
@@ -403,6 +517,7 @@ class FontRepository:
         }
         visual_fonts: dict[str, BitmapFont] = {}
         game_fonts_dir = find_game_fonts_directory()
+        game_fonts_load_error = None
         if game_fonts_dir is not None:
             try:
                 visual_fonts = {
@@ -415,9 +530,15 @@ class FontRepository:
                         "game_body_ru",
                     ),
                 }
-            except (OSError, ValueError):
+            except (OSError, ValueError) as error:
                 visual_fonts = {}
-        return cls(fonts, visual_fonts)
+                game_fonts_load_error = str(error)
+        return cls(
+            fonts,
+            visual_fonts,
+            game_fonts_directory=game_fonts_dir,
+            game_fonts_load_error=game_fonts_load_error,
+        )
 
     def body_family(self, priority: str = "ru") -> FontFamily:
         order = ("body_ru", "body_en") if priority == "ru" else ("body_en", "body_ru")

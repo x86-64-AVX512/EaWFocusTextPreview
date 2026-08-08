@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from uuid import uuid4
 
 from PySide6.QtCore import QEventLoop, QTimer
@@ -47,6 +48,38 @@ def test_main_window_places_bridge_text_in_description(qapp) -> None:
     assert window.description_edit.toPlainText() == expected
     assert window.dynamic_checkbox.isChecked() is False
     assert "нестабильна" in window.dynamic_warning_label.text()
+
+    window.notepad_bridge.close()
+    window.close()
+
+
+def test_main_window_warns_when_original_game_fonts_are_unavailable(qapp) -> None:
+    repository = FontRepository.load(fonts_directory())
+    fallback_repository = FontRepository(repository.fonts)
+    window = MainWindow(fallback_repository)
+
+    assert not window.game_font_warning_label.isHidden()
+    assert "Не удалось найти" in window.game_font_warning_label.text()
+    assert "HOI4_INSTALL_DIR" in window.game_font_warning_label.text()
+
+    window.notepad_bridge.close()
+    window.close()
+
+
+def test_main_window_hides_game_font_warning_when_atlas_is_loaded(qapp) -> None:
+    repository = FontRepository.load(fonts_directory())
+    visual_fonts = {
+        "body_en": repository.fonts["body_en"],
+        "body_ru": repository.fonts["body_ru"],
+    }
+    loaded_repository = FontRepository(
+        repository.fonts,
+        visual_fonts,
+        game_fonts_directory=Path("game/gfx/fonts"),
+    )
+    window = MainWindow(loaded_repository)
+
+    assert window.game_font_warning_label.isHidden()
 
     window.notepad_bridge.close()
     window.close()

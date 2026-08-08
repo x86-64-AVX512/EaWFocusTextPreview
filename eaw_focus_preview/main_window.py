@@ -125,6 +125,14 @@ class MainWindow(QMainWindow):
         heading.setObjectName("heading")
         editor_layout.addWidget(heading)
 
+        self.game_font_warning_label = QLabel(self._game_font_warning_text())
+        self.game_font_warning_label.setObjectName("gameFontWarning")
+        self.game_font_warning_label.setWordWrap(True)
+        self.game_font_warning_label.setVisible(
+            not self.repository.original_game_fonts_available
+        )
+        editor_layout.addWidget(self.game_font_warning_label)
+
         editor_layout.addWidget(self._field_label("Папка мода"))
         mod_row = QHBoxLayout()
         mod_row.setSpacing(8)
@@ -239,6 +247,25 @@ class MainWindow(QMainWindow):
         label = QLabel(text)
         label.setObjectName("fieldLabel")
         return label
+
+    def _game_font_warning_text(self) -> str:
+        if self.repository.game_fonts_directory is not None:
+            details = (
+                f" Причина: {self.repository.game_fonts_load_error}"
+                if self.repository.game_fonts_load_error
+                else ""
+            )
+            return (
+                "⚠ Оригинальные шрифты HOI4 найдены, но их не удалось "
+                "загрузить. Используется встроенный fallback, поэтому текст "
+                f"может выглядеть более пиксельным.{details}"
+            )
+        return (
+            "⚠ Не удалось найти оригинальные шрифты HOI4. Используется "
+            "встроенный fallback, поэтому текст может выглядеть более "
+            "пиксельным. Установите игру через Steam или задайте переменную "
+            "HOI4_INSTALL_DIR."
+        )
 
     def _hint_label(self, text: str) -> QLabel:
         label = QLabel(text)
@@ -559,6 +586,15 @@ QLabel#hintLabel {
 QLabel#dynamicWarning {
     color: #d7ad45;
     font-size: 10px;
+}
+QLabel#gameFontWarning {
+    color: #f1d27a;
+    background: #352d17;
+    border: 1px solid #8b7131;
+    border-left: 4px solid #d7ad45;
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-size: 11px;
 }
 QLineEdit, QTextEdit, QComboBox {
     color: #eef1ed;

@@ -86,6 +86,6 @@ $ini = "[Bridge]`r`nExePath=$resolvedExe`r`n"
     (New-Object System.Text.UTF8Encoding($false))
 )
 
-Write-Host "EaW Focus Bridge 0.7.6F7 installed:"
+Write-Host "EaW Focus Bridge 0.7.6F8 installed:"
 Write-Host $pluginDirectory
 Write-Host "Start Notepad++ and use Alt + double left click inside quoted text."
