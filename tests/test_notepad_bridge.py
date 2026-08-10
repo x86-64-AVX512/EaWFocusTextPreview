@@ -58,6 +58,13 @@ def test_main_window_places_bridge_text_in_description(qapp) -> None:
     assert not window.context_batch_button.isEnabled()
     assert "только фокусы" in window.batch_warning_label.text()
     assert "KEY:" in window.batch_warning_label.text()
+    window.batch_warning_label.ensurePolished()
+    assert (
+        window.batch_warning_label.palette().color(
+            window.batch_warning_label.foregroundRole()
+        ).name()
+        == "#b8c2ba"
+    )
 
     window.notepad_bridge.close()
     window.close()

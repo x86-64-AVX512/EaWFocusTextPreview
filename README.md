@@ -1,4 +1,4 @@
-# EaW Focus Text Preview 0.7.7F1
+# EaW Focus Text Preview 0.7.7F2
 
 Автономное настольное приложение для проверки текста окна национального
 фокуса Hearts of Iron IV: Equestria at War. Предпросмотр использует систему

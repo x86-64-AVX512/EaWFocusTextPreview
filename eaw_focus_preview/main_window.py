@@ -965,6 +965,10 @@ QLabel#hintLabel {
     color: #7f8981;
     font-size: 10px;
 }
+QLabel#batchWarning {
+    color: #b8c2ba;
+    font-size: 10px;
+}
 QLabel#dynamicWarning {
     color: #d7ad45;
     font-size: 10px;
