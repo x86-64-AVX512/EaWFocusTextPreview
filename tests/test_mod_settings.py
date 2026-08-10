@@ -7,6 +7,7 @@ import pytest
 
 import cli_main
 import eaw_focus_preview.mod_settings as mod_settings
+from eaw_focus_preview import __version__
 from eaw_focus_preview.mod_settings import (
     ModSettingsError,
     remember_mod_directory,
@@ -55,7 +56,7 @@ def test_cli_requires_settings_only_for_dynamic_localisation(
     with pytest.raises(SystemExit) as version_exit:
         cli_main.main(["--version"])
     assert version_exit.value.code == 0
-    assert "0.7.6" in capsys.readouterr().out
+    assert __version__ in capsys.readouterr().out
 
     assert cli_main.main(["check", "--description", "Коротко."]) == 0
     output = json.loads(capsys.readouterr().out)

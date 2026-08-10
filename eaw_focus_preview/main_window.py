@@ -6,10 +6,14 @@ from typing import Any
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QCloseEvent, QPalette
 from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
     QCheckBox,
     QComboBox,
+    QDialog,
     QFileDialog,
     QFrame,
+    QHeaderView,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -19,6 +23,8 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSplitter,
+    QTableWidget,
+    QTableWidgetItem,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -30,7 +36,13 @@ from .dynamic_localisation import (
     ModLocalisation,
     ModLocalisationError,
 )
-from .file_loader import load_text_payload
+from .file_loader import (
+    FocusLocalisationEntry,
+    FocusLocalisationFile,
+    load_contextual_focus_file,
+    load_focus_localisation_file,
+    load_text_payload,
+)
 from .focus_canvas import FocusCanvas, PreviewDiagnostics
 from .integration_api import IntegrationServer
 from .mod_settings import ModSettingsError, remember_mod_directory
@@ -69,6 +81,234 @@ class DiagnosticCard(QFrame):
         self.style().unpolish(self)
         self.style().polish(self)
         self.update()
+
+
+class BatchResultsDialog(QDialog):
+    def __init__(
+        self,
+        batch: FocusLocalisationFile,
+        response: dict[str, Any],
+        parent: QWidget | None = None,
+    ):
+        super().__init__(parent)
+        self.batch = batch
+        self.response = response
+        self.selected_entry: FocusLocalisationEntry | None = None
+        self._row_entries: list[FocusLocalisationEntry | None] = []
+        self._row_levels: list[str] = []
+        self.setWindowTitle(f"Пакетная проверка — {batch.path.name}")
+        self.resize(930, 560)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(9)
+        summary = response.get("summary", {})
+        red_count = (
+            int(summary.get("red", 0))
+            + int(summary.get("errors", 0))
+            + len(batch.errors)
+        )
+        self.summary_label = QLabel(
+            f"Проверено описаний: {len(batch.entries)} · "
+            f"зелёных: {int(summary.get('green', 0))} · "
+            f"жёлтых: {int(summary.get('yellow', 0))} · "
+            f"красных/ошибок: {red_count}"
+        )
+        self.summary_label.setObjectName("batchSummary")
+        layout.addWidget(self.summary_label)
+
+        mode_description = {
+            "contextual": (
+                f"Контекстный режим: найдено ID фокусов в моде — "
+                f"{batch.known_focus_ids}; посторонних локализационных "
+                f"значений пропущено — {batch.ignored_values}."
+            ),
+            "localisation": "Обычный режим: распознаны пары ключей фокусов.",
+            "keyed": (
+                "Обычный режим: каждая строка KEY: \"Текст\" или "
+                "KEY:0 \"Текст\" проверена отдельно."
+            ),
+            "plain": "Обычный режим: каждая непустая строка проверена как отдельный фокус.",
+        }.get(batch.source_format, "")
+        mode_label = QLabel(
+            mode_description
+            + " По умолчанию таблица показывает только красные и ошибочные строки."
+        )
+        mode_label.setObjectName("hintLabel")
+        mode_label.setWordWrap(True)
+        layout.addWidget(mode_label)
+
+        self.show_yellow_checkbox = QCheckBox(
+            "Показывать жёлтые строки выше формального maxHeight"
+        )
+        self.show_yellow_checkbox.setChecked(False)
+        layout.addWidget(self.show_yellow_checkbox)
+
+        self.table = QTableWidget(0, 7)
+        self.table.setHorizontalHeaderLabels(
+            (
+                "Статус",
+                "Ключ",
+                "Строка файла",
+                "Строк в окне",
+                "Высота",
+                "Выход",
+                "Причина",
+            )
+        )
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
+        layout.addWidget(self.table, 1)
+
+        for error in batch.errors:
+            self._add_row(
+                entry=None,
+                values=(
+                    "КРАСНЫЙ: ОШИБКА",
+                    f"Строка {error.line_number}",
+                    str(error.line_number),
+                    "—",
+                    "—",
+                    "—",
+                    f"{error.message}: {error.text}",
+                ),
+                level="red",
+            )
+
+        results = response.get("results", [])
+        for entry, wrapped in zip(batch.entries, results, strict=False):
+            if not isinstance(wrapped, dict) or wrapped.get("ok") is not True:
+                message = "Ошибка проверки"
+                if isinstance(wrapped, dict):
+                    error = wrapped.get("error")
+                    if isinstance(error, dict):
+                        message = str(error.get("message", message))
+                self._add_row(
+                    entry=entry,
+                    values=(
+                        "КРАСНЫЙ: ОШИБКА",
+                        entry.key,
+                        str(entry.line_number),
+                        "—",
+                        "—",
+                        "—",
+                        message,
+                    ),
+                    level="red",
+                )
+                continue
+            result = wrapped.get("result", {})
+            status = str(result.get("status", "red"))
+            if status == "green":
+                continue
+            description = result.get("description", {})
+            if not isinstance(description, dict):
+                description = {}
+            if status == "yellow":
+                overflow = int(description.get("formal_overflow_px", 0))
+                status_text = "ЖЁЛТЫЙ"
+                reason = f"Выше формального maxHeight на {overflow} px"
+            else:
+                overflow = int(description.get("panel_overlap_px", 0))
+                status_text = "КРАСНЫЙ"
+                reason = f"Заходит под панель «Эффект» на {overflow} px"
+            self._add_row(
+                entry=entry,
+                values=(
+                    status_text,
+                    entry.key,
+                    str(entry.line_number),
+                    str(description.get("lines", "—")),
+                    f"{description.get('height_px', '—')} px",
+                    f"{overflow} px",
+                    reason,
+                ),
+                level=status,
+            )
+
+        button_row = QHBoxLayout()
+        button_row.addStretch(1)
+        self.open_button = QPushButton("Открыть выбранный фокус")
+        self.open_button.setEnabled(False)
+        close_button = QPushButton("Закрыть")
+        close_button.setObjectName("ghostButton")
+        button_row.addWidget(self.open_button)
+        button_row.addWidget(close_button)
+        layout.addLayout(button_row)
+
+        self.table.currentCellChanged.connect(self._selection_changed)
+        self.table.cellDoubleClicked.connect(self._open_row)
+        self.show_yellow_checkbox.toggled.connect(
+            self._yellow_visibility_changed
+        )
+        self.open_button.clicked.connect(self._open_selected)
+        close_button.clicked.connect(self.reject)
+        for row, entry in enumerate(self._row_entries):
+            if entry is not None and not self.table.isRowHidden(row):
+                self.table.selectRow(row)
+                break
+
+    def _add_row(
+        self,
+        *,
+        entry: FocusLocalisationEntry | None,
+        values: tuple[str, ...],
+        level: str,
+    ) -> None:
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        self._row_entries.append(entry)
+        self._row_levels.append(level)
+        background = QColor(80, 34, 32) if level == "red" else QColor(88, 72, 25)
+        for column, value in enumerate(values):
+            item = QTableWidgetItem(value)
+            item.setBackground(background)
+            self.table.setItem(row, column, item)
+        if level == "yellow":
+            self.table.setRowHidden(row, True)
+
+    def _yellow_visibility_changed(self, visible: bool) -> None:
+        for row, level in enumerate(self._row_levels):
+            if level == "yellow":
+                self.table.setRowHidden(row, not visible)
+        current_row = self.table.currentRow()
+        if current_row >= 0 and self.table.isRowHidden(current_row):
+            self.table.clearSelection()
+            self.table.setCurrentCell(-1, -1)
+            self.open_button.setEnabled(False)
+        if self.table.currentRow() < 0:
+            for row, entry in enumerate(self._row_entries):
+                if entry is not None and not self.table.isRowHidden(row):
+                    self.table.selectRow(row)
+                    break
+
+    def _selection_changed(self, row: int, *_args: int) -> None:
+        self.open_button.setEnabled(
+            0 <= row < len(self._row_entries)
+            and self._row_entries[row] is not None
+        )
+
+    def _open_row(self, row: int, _column: int) -> None:
+        if 0 <= row < len(self._row_entries) and self._row_entries[row] is not None:
+            self.table.selectRow(row)
+            self._open_selected()
+
+    def _open_selected(self) -> None:
+        row = self.table.currentRow()
+        if not 0 <= row < len(self._row_entries):
+            return
+        entry = self._row_entries[row]
+        if entry is None:
+            return
+        self.selected_entry = entry
+        self.accept()
 
 
 class MainWindow(QMainWindow):
@@ -203,6 +443,30 @@ class MainWindow(QMainWindow):
         actions.addWidget(self.clear_button)
         editor_layout.addLayout(actions)
 
+        editor_layout.addWidget(self._field_label("Пакетная проверка файла"))
+        batch_actions = QHBoxLayout()
+        batch_actions.setSpacing(8)
+        self.ordinary_batch_button = QPushButton("Обычный режим…")
+        self.context_batch_button = QPushButton("Контекстный режим…")
+        self.context_batch_button.setEnabled(self.mod_localisation is not None)
+        self.context_batch_button.setToolTip(
+            "Сначала выберите папку мода"
+            if self.mod_localisation is None
+            else "Сверить ключи с ID фокусов выбранного мода"
+        )
+        batch_actions.addWidget(self.ordinary_batch_button)
+        batch_actions.addWidget(self.context_batch_button)
+        editor_layout.addLayout(batch_actions)
+        self.batch_warning_label = self._hint_label(
+            "Обычный режим: файл должен содержать только фокусы, иначе "
+            "возможны ложные срабатывания. Принимаются голые строки и "
+            "KEY: \"Текст\" / KEY:0 \"Текст\". Контекстный режим читает "
+            "ID из папки мода "
+            "и требует ключ с кавычками в каждой строке."
+        )
+        self.batch_warning_label.setObjectName("batchWarning")
+        editor_layout.addWidget(self.batch_warning_label)
+
         self.overall_card = DiagnosticCard("Общий результат")
         self.description_card = DiagnosticCard("Описание")
         self.effect_card = DiagnosticCard("Эффект")
@@ -285,6 +549,12 @@ class MainWindow(QMainWindow):
         self.clear_button.clicked.connect(self.clear_fields)
         self.load_button.clicked.connect(self.load_file)
         self.change_mod_button.clicked.connect(self.choose_mod_directory)
+        self.ordinary_batch_button.clicked.connect(
+            lambda: self.check_focus_file(contextual=False)
+        )
+        self.context_batch_button.clicked.connect(
+            lambda: self.check_focus_file(contextual=True)
+        )
 
     @property
     def current_language(self) -> str:
@@ -372,6 +642,10 @@ class MainWindow(QMainWindow):
         remember_mod_directory(mod_localisation.root)
         self.mod_localisation = mod_localisation
         self.mod_path_edit.setText(str(mod_localisation.root))
+        self.context_batch_button.setEnabled(True)
+        self.context_batch_button.setToolTip(
+            "Сверить ключи с ID фокусов выбранного мода"
+        )
         self._populate_languages(selected_language)
         self.canvas.set_mod_localisation(mod_localisation)
         self.integration_engine = FocusValidationEngine(
@@ -459,6 +733,114 @@ class MainWindow(QMainWindow):
                 if index >= 0:
                     self.language_combo.setCurrentIndex(index)
                 break
+        self.refresh_preview()
+
+    def _apply_batch_language(self, language: str | None) -> None:
+        if language is None:
+            return
+        language_index = self.language_combo.findData(language)
+        if language_index >= 0:
+            self.language_combo.setCurrentIndex(language_index)
+        priority = {"russian": "ru", "english": "en"}.get(language)
+        if priority is not None:
+            priority_index = self.priority_combo.findData(priority)
+            if priority_index >= 0:
+                self.priority_combo.setCurrentIndex(priority_index)
+
+    def check_focus_file(self, *, contextual: bool) -> None:
+        if contextual and self.mod_localisation is None:
+            QMessageBox.warning(
+                self,
+                "Сначала выберите папку мода",
+                "Контекстный режим читает ID из common/national_focus и "
+                "не может работать без выбранной папки мода.",
+            )
+            return
+
+        initial_directory = (
+            str(self.mod_localisation.root / "localisation")
+            if contextual and self.mod_localisation is not None
+            else ""
+        )
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            (
+                "Контекстная проверка файла фокусов"
+                if contextual
+                else "Обычная проверка файла фокусов"
+            ),
+            initial_directory,
+            "Текст и локализация (*.txt *.yml *.yaml);;Все файлы (*)",
+        )
+        if not filename:
+            return
+
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        QApplication.processEvents()
+        try:
+            path = Path(filename)
+            batch = (
+                load_contextual_focus_file(
+                    path,
+                    self.mod_localisation.root,
+                )
+                if contextual and self.mod_localisation is not None
+                else load_focus_localisation_file(path)
+            )
+            self._apply_batch_language(batch.language)
+            self.integration_engine.default_language = self.current_language
+            response = self.integration_engine.process_document(
+                {
+                    "items": [
+                        {
+                            "id": entry.line_number,
+                            "key": entry.key,
+                            "title": entry.title,
+                            "description": entry.description,
+                            "effect": "",
+                        }
+                        for entry in batch.entries
+                    ],
+                    "glyph_priority": self.priority_combo.currentData() or "ru",
+                    "language": self.current_language,
+                    "policy": "visual",
+                    "dynamic_localisation": self.dynamic_checkbox.isChecked(),
+                }
+            )
+        except (OSError, ValueError) as error:
+            QMessageBox.critical(
+                self,
+                "Не удалось проверить файл",
+                str(error),
+            )
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+
+        if not batch.entries and not batch.errors:
+            details = (
+                f" ID фокусов в моде: {batch.known_focus_ids}; "
+                f"посторонних значений пропущено: {batch.ignored_values}."
+                if contextual
+                else ""
+            )
+            QMessageBox.warning(
+                self,
+                "Тексты фокусов не найдены",
+                "В выбранном файле не найдено ни одного текста для проверки."
+                + details,
+            )
+            return
+
+        dialog = BatchResultsDialog(batch, response, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        entry = dialog.selected_entry
+        if entry is None:
+            return
+        self.title_edit.setText(entry.title)
+        self.description_edit.setPlainText(entry.description)
+        self.effect_edit.clear()
         self.refresh_preview()
 
     def refresh_preview(self) -> None:
