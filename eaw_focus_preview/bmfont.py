@@ -503,6 +503,17 @@ class FontRepository:
     def original_game_fonts_available(self) -> bool:
         return bool(self.visual_fonts)
 
+    @property
+    def game_root(self) -> Path | None:
+        directory = self.game_fonts_directory
+        if directory is None:
+            return None
+        if directory.name.casefold() != "fonts":
+            return None
+        if directory.parent.name.casefold() != "gfx":
+            return None
+        return directory.parent.parent
+
     @classmethod
     def load(cls, fonts_dir: Path) -> "FontRepository":
         sources = {

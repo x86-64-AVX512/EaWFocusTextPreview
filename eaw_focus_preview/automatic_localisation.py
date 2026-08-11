@@ -62,12 +62,16 @@ class AutomaticLocalisationCatalog:
         country_tags: frozenset[str],
         character_name_keys: tuple[str, ...],
         faction_name_keys: tuple[str, ...],
+        source_roots: tuple[Path, ...],
     ):
         self.root = root
         self.localisations = localisations
         self.country_tags = country_tags
         self.character_name_keys = character_name_keys
         self.faction_name_keys = faction_name_keys
+        self.source_roots = source_roots
+        self._characters_loaded = bool(character_name_keys)
+        self._factions_loaded = bool(faction_name_keys)
         self._pool_cache: dict[str, _LanguagePools] = {}
 
     @classmethod
@@ -75,39 +79,26 @@ class AutomaticLocalisationCatalog:
         cls,
         root: Path,
         localisations: dict[str, dict[str, str]],
+        *,
+        source_roots: tuple[Path, ...] | None = None,
     ) -> "AutomaticLocalisationCatalog":
+        roots = source_roots or (root,)
         country_tags: set[str] = set()
-        tags_directory = root / "common" / "country_tags"
-        if tags_directory.is_dir():
-            for path in sorted(tags_directory.rglob("*.txt")):
-                country_tags.update(
-                    _COUNTRY_TAG_RE.findall(read_text_file(path))
-                )
-
-        character_names: list[str] = []
-        characters_directory = root / "common" / "characters"
-        if characters_directory.is_dir():
-            for path in sorted(characters_directory.rglob("*.txt")):
-                character_names.extend(
-                    _country_leader_names(read_text_file(path))
-                )
-
-        faction_names: list[str] = []
-        for factions_directory in (root / "common", root / "events"):
-            if not factions_directory.is_dir():
-                continue
-            for path in sorted(factions_directory.rglob("*.txt")):
-                for match in _FACTION_REFERENCE_RE.finditer(read_text_file(path)):
-                    key = match.group(1) or match.group(2)
-                    if "[" not in key:
-                        faction_names.append(key)
+        for source_root in roots:
+            tags_directory = source_root / "common" / "country_tags"
+            if tags_directory.is_dir():
+                for path in sorted(tags_directory.rglob("*.txt")):
+                    country_tags.update(
+                        _COUNTRY_TAG_RE.findall(read_text_file(path))
+                    )
 
         return cls(
             root,
             localisations,
             frozenset(country_tags),
-            _unique(character_names),
-            _unique(faction_names),
+            (),
+            (),
+            tuple(roots),
         )
 
     def variants_for(
@@ -119,14 +110,25 @@ class AutomaticLocalisationCatalog:
         if not parts or parts[0].startswith("?"):
             return None
         method = parts[-1].casefold()
+        if method in {
+            "getleader",
+            "getfullname",
+            "getfirstname",
+            "getsurname",
+            "getcallsign",
+        }:
+            self._ensure_character_names()
+        if method == "getfactionname":
+            self._ensure_faction_names()
         pools = self._pools(language)
         tag = parts[0].upper() if parts[0].upper() in self.country_tags else None
 
         if method in {
             "getname",
-            "getnamewithflag",
             "getname_gen",
             "getcountry",
+            "getnonideologyname",
+            "getnameshort",
         }:
             location_scope = (
                 parts[0].isdigit()
@@ -140,6 +142,19 @@ class AutomaticLocalisationCatalog:
                 else pools.country_names
             )
             return AutomaticVariants("GetName(country)", values)
+
+        if method in {"getnamewithflag", "getnamewithflagcap"}:
+            values = (
+                pools.country_names_by_tag.get(tag, ())
+                if tag is not None
+                else pools.country_names
+            )
+            # The bitmap renderer does not draw flag sprites. Four spaces keep
+            # a conservative approximation of the inline flag width.
+            return AutomaticVariants(
+                "GetNameWithFlag",
+                tuple(f"    {value}" for value in values),
+            )
 
         if method in {"getnamedef", "getnamedefcap"}:
             values = (
@@ -157,8 +172,16 @@ class AutomaticLocalisationCatalog:
             )
             return AutomaticVariants("GetAdjective", values)
 
-        if method == "getleader":
+        if method in {
+            "getleader",
+            "getfullname",
+            "getfirstname",
+            "getsurname",
+            "getcallsign",
+        }:
             return AutomaticVariants("GetLeader", pools.leaders)
+        if method in {"getflag", "getflagcap"}:
+            return AutomaticVariants("GetFlag", ("    ",))
         if method in {"getcapitalvictorypointname", "getcapitalname"}:
             return AutomaticVariants("GetCapitalName", pools.capitals)
         if method == "getfactionname":
@@ -182,6 +205,39 @@ class AutomaticLocalisationCatalog:
         if pronouns:
             return AutomaticVariants(parts[-1], pronouns)
         return None
+
+    def _ensure_character_names(self) -> None:
+        if self._characters_loaded:
+            return
+        names: list[str] = []
+        for source_root in self.source_roots:
+            directory = source_root / "common" / "characters"
+            if not directory.is_dir():
+                continue
+            for path in sorted(directory.rglob("*.txt")):
+                names.extend(_country_leader_names(read_text_file(path)))
+        self.character_name_keys = _unique(names)
+        self._characters_loaded = True
+        self._pool_cache.clear()
+
+    def _ensure_faction_names(self) -> None:
+        if self._factions_loaded:
+            return
+        names: list[str] = []
+        for source_root in self.source_roots:
+            for directory in (source_root / "common", source_root / "events"):
+                if not directory.is_dir():
+                    continue
+                for path in sorted(directory.rglob("*.txt")):
+                    for match in _FACTION_REFERENCE_RE.finditer(
+                        read_text_file(path)
+                    ):
+                        key = match.group(1) or match.group(2)
+                        if "[" not in key:
+                            names.append(key)
+        self.faction_name_keys = _unique(names)
+        self._factions_loaded = True
+        self._pool_cache.clear()
 
     def _pools(self, language: str) -> _LanguagePools:
         if language in self._pool_cache:
@@ -268,7 +324,12 @@ class AutomaticLocalisationCatalog:
     def _date_variants(method: str, language: str) -> tuple[str, ...]:
         if method == "getyear":
             return ("9999",)
-        if method not in {"getmonth", "getdate", "getdatetext"}:
+        if method not in {
+            "getmonth",
+            "getdate",
+            "getdatetext",
+            "getdatestringnohourlong",
+        }:
             return ()
         months = {
             "russian": (

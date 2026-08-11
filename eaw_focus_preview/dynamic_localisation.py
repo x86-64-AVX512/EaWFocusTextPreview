@@ -7,6 +7,20 @@ import re
 from typing import Callable, Iterable, TypeAlias
 
 from .automatic_localisation import AutomaticLocalisationCatalog
+from .clausewitz_interpreter import (
+    ClausewitzBlock,
+    ConditionExpression,
+    TRUE_EXPRESSION,
+    child_blocks,
+    condition_and,
+    condition_from_trigger,
+    condition_not,
+    conditions_satisfiable,
+    describe_condition,
+    expression_predicates,
+    parse_clausewitz,
+    scalar_values,
+)
 
 
 DYNAMIC_LOCALISATION_WARNING = (
@@ -18,16 +32,19 @@ from .file_loader import parse_localisation_value_line, read_text_file
 
 MAX_VARIANTS_PER_DEFINITION = 256
 MAX_COMBINATIONS = 4096
-MAX_RECURSION_DEPTH = 12
+MAX_RECURSION_DEPTH = 30
 MAX_REPORTED_VARIANTS = 64
+SUPPORTED_LOCALISATION_LANGUAGES = frozenset({"russian", "english"})
 
 _DYNAMIC_TOKEN_RE = re.compile(r"\[([^\[\]\r\n]+)\]")
 _LANGUAGE_HEADER_RE = re.compile(r"^\s*l_([A-Za-z0-9_]+)\s*:\s*$")
 _STATIC_REFERENCE_RE = re.compile(
     r"\$([A-Za-z0-9_.-]+)(?:\|[^$]+)?\$"
 )
+_SCRIPTED_NAME_RE = re.compile(
+    r'(?i)\bname\s*=\s*(?:"([^"\r\n]+)"|([^\s#}]+))'
+)
 
-ClausewitzValue: TypeAlias = str | list[tuple[str, "ClausewitzValue"]]
 Score: TypeAlias = tuple[float | int, ...]
 
 
@@ -41,6 +58,10 @@ class DynamicReplacement:
     name: str
     selected: str
     variants: tuple[str, ...]
+    localisation_key: str | None = None
+    source: str | None = None
+    condition: str | None = None
+    condition_exact: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +72,9 @@ class DynamicResolution:
     unresolved_tokens: tuple[str, ...] = ()
     combinations_evaluated: int = 0
     truncated: bool = False
+    incompatible_combinations: int = 0
+    symbolic_checks: int = 0
+    confidence: str = "exact"
 
     def as_dict(self) -> dict[str, object]:
         def replacement_dict(
@@ -68,6 +92,10 @@ class DynamicResolution:
                 "variants": reported,
                 "variant_count": len(replacement.variants),
                 "variants_truncated": len(reported) < len(replacement.variants),
+                "localisation_key": replacement.localisation_key,
+                "source": replacement.source,
+                "condition": replacement.condition,
+                "condition_exact": replacement.condition_exact,
             }
 
         return {
@@ -80,146 +108,132 @@ class DynamicResolution:
             "unresolved_tokens": list(self.unresolved_tokens),
             "combinations_evaluated": self.combinations_evaluated,
             "truncated": self.truncated,
+            "incompatible_combinations": self.incompatible_combinations,
+            "symbolic_checks": self.symbolic_checks,
+            "confidence": self.confidence,
         }
 
 
-def _tokenize_clausewitz(text: str) -> list[str]:
-    tokens: list[str] = []
-    index = 0
-    while index < len(text):
-        character = text[index]
-        if character.isspace():
-            index += 1
-            continue
-        if character == "#":
-            newline = text.find("\n", index)
-            index = len(text) if newline < 0 else newline + 1
-            continue
-        if character in "{}=":
-            tokens.append(character)
-            index += 1
-            continue
-        if character == '"':
-            index += 1
-            value: list[str] = []
-            while index < len(text):
-                current = text[index]
-                if current == "\\" and index + 1 < len(text):
-                    following = text[index + 1]
-                    if following in {'"', "\\"}:
-                        value.append(following)
-                        index += 2
-                        continue
-                if current == '"':
-                    index += 1
-                    break
-                value.append(current)
-                index += 1
-            tokens.append("".join(value))
-            continue
-
-        end = index
-        while (
-            end < len(text)
-            and not text[end].isspace()
-            and text[end] not in '{}="#'
-        ):
-            end += 1
-        if end == index:
-            index += 1
-            continue
-        tokens.append(text[index:end])
-        index = end
-    return tokens
+@dataclass(frozen=True, slots=True)
+class ScriptedLocalisationBranch:
+    localisation_key: str
+    trigger: ClausewitzBlock | None
+    source: str | None
+    ordinal: int
 
 
-def _parse_clausewitz_entries(
-    tokens: list[str],
-    index: int = 0,
+@dataclass(frozen=True, slots=True)
+class ScriptedLocalisationDefinition:
+    name: str
+    branches: tuple[ScriptedLocalisationBranch, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _ResolvedVariant:
+    text: str
+    condition: ConditionExpression = TRUE_EXPRESSION
+    localisation_key: str | None = None
+    source: str | None = None
+    condition_description: str | None = None
+    condition_exact: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class _DynamicChoice:
+    name: str
+    tokens: tuple[str, ...]
+    variants: tuple[_ResolvedVariant, ...]
+
+
+def _recursive_scalar_values(
+    block: ClausewitzBlock,
+    wanted_key: str,
+) -> list[str]:
+    result: list[str] = []
+    folded = wanted_key.casefold()
+    for entry in block:
+        if entry.key.casefold() == folded and isinstance(entry.value, str):
+            result.append(entry.value)
+        elif isinstance(entry.value, tuple):
+            result.extend(_recursive_scalar_values(entry.value, wanted_key))
+    return result
+
+
+def parse_scripted_localisation_definitions(
+    text: str,
     *,
-    nested: bool = False,
-) -> tuple[list[tuple[str, ClausewitzValue]], int]:
-    entries: list[tuple[str, ClausewitzValue]] = []
-    while index < len(tokens):
-        if tokens[index] == "}":
-            return entries, index + 1
-        key = tokens[index]
-        index += 1
-        if index >= len(tokens) or tokens[index] != "=":
+    source: str | None = None,
+) -> dict[str, ScriptedLocalisationDefinition]:
+    parsed = parse_clausewitz(text)
+    collected: dict[str, list[ScriptedLocalisationBranch]] = {}
+    for definition_block in child_blocks(parsed, "defined_text"):
+        names = scalar_values(definition_block, "name")
+        if not names:
             continue
-        index += 1
-        if index >= len(tokens):
-            entries.append((key, ""))
-            break
-        if tokens[index] == "{":
-            value, index = _parse_clausewitz_entries(
-                tokens,
-                index + 1,
-                nested=True,
+        name = names[0]
+        output = collected.setdefault(name, [])
+        for text_block in child_blocks(definition_block, "text"):
+            trigger_blocks = child_blocks(text_block, "trigger")
+            trigger = (
+                tuple(
+                    entry
+                    for trigger_block in trigger_blocks
+                    for entry in trigger_block
+                )
+                if trigger_blocks
+                else None
             )
-            entries.append((key, value))
-        else:
-            entries.append((key, tokens[index]))
-            index += 1
-    if nested:
-        return entries, index
-    return entries, index
+            for localisation_key in _recursive_scalar_values(
+                text_block,
+                "localization_key",
+            ):
+                output.append(
+                    ScriptedLocalisationBranch(
+                        localisation_key=localisation_key,
+                        trigger=trigger,
+                        source=source,
+                        ordinal=len(output),
+                    )
+                )
+    return {
+        name: ScriptedLocalisationDefinition(name, tuple(branches))
+        for name, branches in collected.items()
+    }
 
 
 def parse_scripted_localisation(
     text: str,
 ) -> dict[str, tuple[str, ...]]:
-    tokens = _tokenize_clausewitz(text)
-    entries, _ = _parse_clausewitz_entries(tokens)
-    definitions: dict[str, list[str]] = {}
-
-    for key, value in entries:
-        if key != "defined_text" or not isinstance(value, list):
-            continue
-        names = [
-            entry_value
-            for entry_key, entry_value in value
-            if entry_key == "name" and isinstance(entry_value, str)
-        ]
-        if not names:
-            continue
-        name = names[0]
-        keys: list[str] = []
-        for entry_key, entry_value in value:
-            if entry_key != "text" or not isinstance(entry_value, list):
-                continue
-            keys.extend(_recursive_scalar_values(entry_value, "localization_key"))
-        definitions.setdefault(name, []).extend(keys)
-
     return {
-        name: tuple(dict.fromkeys(keys))
-        for name, keys in definitions.items()
+        name: tuple(
+            dict.fromkeys(
+                branch.localisation_key for branch in definition.branches
+            )
+        )
+        for name, definition in parse_scripted_localisation_definitions(
+            text
+        ).items()
     }
-
-
-def _recursive_scalar_values(
-    entries: list[tuple[str, ClausewitzValue]],
-    wanted_key: str,
-) -> list[str]:
-    result: list[str] = []
-    for key, value in entries:
-        if key == wanted_key and isinstance(value, str):
-            result.append(value)
-        elif isinstance(value, list):
-            result.extend(_recursive_scalar_values(value, wanted_key))
-    return result
 
 
 def parse_localisation_text(
     text: str,
+    *,
+    wanted_languages: frozenset[str] | None = None,
 ) -> dict[str, dict[str, str]]:
     languages: dict[str, dict[str, str]] = {}
     current_language: str | None = None
     for line in text.splitlines():
         language_match = _LANGUAGE_HEADER_RE.match(line)
         if language_match:
-            current_language = language_match.group(1).casefold()
-            languages.setdefault(current_language, {})
+            language = language_match.group(1).casefold()
+            current_language = (
+                language
+                if wanted_languages is None or language in wanted_languages
+                else None
+            )
+            if current_language is not None:
+                languages.setdefault(current_language, {})
             continue
         if current_language is None:
             continue
@@ -247,6 +261,91 @@ def validate_mod_directory(path: Path) -> Path:
     return resolved
 
 
+def _load_scripted_definition_layer(
+    root: Path,
+) -> dict[str, ScriptedLocalisationDefinition]:
+    directory = root / "common" / "scripted_localisation"
+    collected: dict[str, list[ScriptedLocalisationBranch]] = {}
+    if not directory.is_dir():
+        return {}
+    for path in sorted(directory.rglob("*.txt")):
+        try:
+            source = str(path.relative_to(root)).replace("\\", "/")
+        except ValueError:
+            source = str(path)
+        parsed = parse_scripted_localisation_definitions(
+            read_text_file(path),
+            source=source,
+        )
+        for name, definition in parsed.items():
+            collected.setdefault(name, []).extend(definition.branches)
+    return {
+        name: ScriptedLocalisationDefinition(
+            name,
+            tuple(
+                ScriptedLocalisationBranch(
+                    branch.localisation_key,
+                    branch.trigger,
+                    branch.source,
+                    ordinal,
+                )
+                for ordinal, branch in enumerate(branches)
+            ),
+        )
+        for name, branches in collected.items()
+    }
+
+
+def _index_scripted_definition_paths(root: Path) -> dict[str, tuple[Path, ...]]:
+    directory = root / "common" / "scripted_localisation"
+    if not directory.is_dir():
+        return {}
+    indexed: dict[str, list[Path]] = {}
+    for path in sorted(directory.rglob("*.txt")):
+        text = read_text_file(path)
+        for match in _SCRIPTED_NAME_RE.finditer(text):
+            name = match.group(1) or match.group(2)
+            paths = indexed.setdefault(name.casefold(), [])
+            if path not in paths:
+                paths.append(path)
+    return {name: tuple(paths) for name, paths in indexed.items()}
+
+
+def _localisation_paths(root: Path) -> list[Path]:
+    directory = root / "localisation"
+    if not directory.is_dir():
+        return []
+    paths = sorted(
+        directory.rglob("*.yml"),
+        key=lambda path: (
+            "replace" in {
+                part.casefold() for part in path.relative_to(directory).parts
+            },
+            str(path).casefold(),
+        ),
+    )
+    paths.extend(
+        sorted(directory.rglob("*.yaml"), key=lambda path: str(path).casefold())
+    )
+    return paths
+
+
+def _load_localisations(
+    root: Path,
+    *,
+    wanted_languages: frozenset[str] | None = None,
+) -> dict[str, dict[str, str]]:
+    localisations: dict[str, dict[str, str]] = {}
+    for path in _localisation_paths(root):
+        parsed = parse_localisation_text(
+            read_text_file(path),
+            wanted_languages=wanted_languages,
+        )
+        for language, values in parsed.items():
+            localisations.setdefault(language, {}).update(values)
+    return localisations
+
+
 class ModLocalisation:
     def __init__(
         self,
@@ -254,9 +353,28 @@ class ModLocalisation:
         definitions: dict[str, tuple[str, ...]],
         localisations: dict[str, dict[str, str]],
         automatic_catalog: AutomaticLocalisationCatalog,
+        *,
+        structured_definitions: dict[
+            str, ScriptedLocalisationDefinition
+        ] | None = None,
+        base_game_root: Path | None = None,
+        base_definition_sources: dict[str, tuple[Path, ...]] | None = None,
     ):
         self.root = root
         self.definitions = definitions
+        self.structured_definitions = structured_definitions or {
+            name: ScriptedLocalisationDefinition(
+                name,
+                tuple(
+                    ScriptedLocalisationBranch(key, None, None, ordinal)
+                    for ordinal, key in enumerate(keys)
+                ),
+            )
+            for name, keys in definitions.items()
+        }
+        self.base_game_root = base_game_root
+        self._base_definition_sources = base_definition_sources or {}
+        self._missing_base_definitions: set[str] = set()
         self.localisations = localisations
         self.automatic_catalog = automatic_catalog
         self._definition_names = {
@@ -269,44 +387,59 @@ class ModLocalisation:
             for language, values in self.localisations.items()
         }
         self._variant_cache: dict[tuple[str, str], tuple[str, ...]] = {}
-        self._automatic_variant_cache: dict[
-            tuple[str, str], tuple[str, tuple[str, ...]] | None
+        self._resolved_variant_cache: dict[
+            tuple[str, str, str], tuple[_ResolvedVariant, ...]
         ] = {}
-        self._automatic_resolving: set[tuple[str, str]] = set()
+        self._automatic_variant_cache: dict[
+            tuple[str, str, str],
+            tuple[str, tuple[_ResolvedVariant, ...]] | None,
+        ] = {}
+        self._automatic_resolving: set[tuple[str, str, str]] = set()
 
     @classmethod
-    def load(cls, root: Path) -> "ModLocalisation":
+    def load(
+        cls,
+        root: Path,
+        *,
+        base_game_root: Path | None = None,
+    ) -> "ModLocalisation":
         resolved = validate_mod_directory(root)
-        definitions: dict[str, list[str]] = {}
-        scripted_directory = resolved / "common" / "scripted_localisation"
-        for path in sorted(scripted_directory.rglob("*.txt")):
-            parsed = parse_scripted_localisation(read_text_file(path))
-            for name, keys in parsed.items():
-                definitions.setdefault(name, []).extend(keys)
+        resolved_base = None
+        if base_game_root is not None:
+            candidate = base_game_root.expanduser().resolve()
+            if candidate != resolved and candidate.is_dir():
+                resolved_base = candidate
 
-        localisations: dict[str, dict[str, str]] = {}
-        localisation_directory = resolved / "localisation"
-        paths = sorted(
-            localisation_directory.rglob("*.yml"),
-            key=lambda path: (
-                "replace" in {
-                    part.casefold() for part in path.relative_to(
-                        localisation_directory
-                    ).parts
-                },
-                str(path).casefold(),
-            ),
+        # Vanilla definitions are indexed cheaply and parsed on first use.
+        # Mod definitions are authoritative when a name exists in both layers.
+        structured_definitions = _load_scripted_definition_layer(resolved)
+        base_definition_sources = (
+            _index_scripted_definition_paths(resolved_base)
+            if resolved_base is not None
+            else {}
         )
-        paths.extend(
-            sorted(
-                localisation_directory.rglob("*.yaml"),
-                key=lambda path: str(path).casefold(),
+        definitions = {
+            name: tuple(
+                dict.fromkeys(
+                    branch.localisation_key for branch in definition.branches
+                )
             )
+            for name, definition in structured_definitions.items()
+        }
+
+        mod_localisations = _load_localisations(
+            resolved,
+            wanted_languages=SUPPORTED_LOCALISATION_LANGUAGES,
         )
-        for path in paths:
-            parsed = parse_localisation_text(read_text_file(path))
-            for language, values in parsed.items():
+        if resolved_base is not None:
+            localisations = _load_localisations(
+                resolved_base,
+                wanted_languages=frozenset(mod_localisations),
+            )
+            for language, values in mod_localisations.items():
                 localisations.setdefault(language, {}).update(values)
+        else:
+            localisations = mod_localisations
 
         if not definitions:
             raise ModLocalisationError(
@@ -319,15 +452,20 @@ class ModLocalisation:
         automatic_catalog = AutomaticLocalisationCatalog.load(
             resolved,
             localisations,
+            source_roots=tuple(
+                root
+                for root in (resolved_base, resolved)
+                if root is not None
+            ),
         )
         return cls(
             resolved,
-            {
-                name: tuple(dict.fromkeys(keys))
-                for name, keys in definitions.items()
-            },
+            definitions,
             localisations,
             automatic_catalog,
+            structured_definitions=structured_definitions,
+            base_game_root=resolved_base,
+            base_definition_sources=base_definition_sources,
         )
 
     @property
@@ -357,9 +495,61 @@ class ModLocalisation:
             candidates.append(stripped.rsplit(".", 1)[-1])
         for candidate in candidates:
             exact = self._definition_names.get(candidate.casefold())
+            if exact is None:
+                self._load_base_definition(candidate)
+                exact = self._definition_names.get(candidate.casefold())
             if exact is not None:
                 return exact
         return None
+
+    def _load_base_definition(self, requested_name: str) -> None:
+        folded = requested_name.casefold()
+        if (
+            folded in self._missing_base_definitions
+            or folded in self._definition_names
+        ):
+            return
+        paths = self._base_definition_sources.get(folded, ())
+        branches: list[ScriptedLocalisationBranch] = []
+        actual_name: str | None = None
+        for path in paths:
+            assert self.base_game_root is not None
+            try:
+                source = str(path.relative_to(self.base_game_root)).replace(
+                    "\\", "/"
+                )
+            except ValueError:
+                source = str(path)
+            parsed = parse_scripted_localisation_definitions(
+                read_text_file(path),
+                source=source,
+            )
+            for name, definition in parsed.items():
+                if name.casefold() == folded:
+                    actual_name = name
+                    branches.extend(definition.branches)
+        if actual_name is None or not branches:
+            self._missing_base_definitions.add(folded)
+            return
+        definition = ScriptedLocalisationDefinition(
+            actual_name,
+            tuple(
+                ScriptedLocalisationBranch(
+                    branch.localisation_key,
+                    branch.trigger,
+                    branch.source,
+                    ordinal,
+                )
+                for ordinal, branch in enumerate(branches)
+            ),
+        )
+        self.structured_definitions[actual_name] = definition
+        self.definitions[actual_name] = tuple(
+            dict.fromkeys(
+                branch.localisation_key for branch in definition.branches
+            )
+        )
+        self._definition_names[folded] = actual_name
 
     def _localisation_value(self, language: str, key: str) -> str:
         values = self.localisations[language]
@@ -405,40 +595,144 @@ class ModLocalisation:
             raise ModLocalisationError(
                 f"В моде нет локализации языка {language!r}"
             )
+        cache_key = (normalized_language, name)
+        if not _stack and cache_key in self._variant_cache:
+            return self._variant_cache[cache_key]
+        resolved = self._resolved_variants_for(
+            name,
+            normalized_language,
+            root_scope="root",
+            stack=_stack,
+        )
+        result = tuple(dict.fromkeys(variant.text for variant in resolved))
+        if not _stack:
+            self._variant_cache[cache_key] = result
+        return result
+
+    @staticmethod
+    def _reference_scope(
+        token_content: str,
+        current_root_scope: str,
+    ) -> str:
+        parts = [part for part in token_content.strip().split(".") if part]
+        prefix = parts[:-1]
+        if not prefix:
+            return current_root_scope
+        first = prefix[0]
+        folded = first.casefold()
+        if folded in {"root", "this"}:
+            scope = current_root_scope
+        elif len(first) == 3 and first.isalnum() and first.upper() == first:
+            scope = f"country:{first}"
+        else:
+            scope = f"scope:{folded}"
+        for component in prefix[1:]:
+            scope += f".{component.casefold()}"
+        return scope
+
+    def _selection_condition(
+        self,
+        definition: ScriptedLocalisationDefinition,
+        branch: ScriptedLocalisationBranch,
+        root_scope: str,
+    ) -> ConditionExpression:
+        current = condition_from_trigger(
+            branch.trigger,
+            root_scope=root_scope,
+        )
+        earlier = tuple(
+            condition_from_trigger(
+                previous.trigger,
+                root_scope=root_scope,
+            )
+            for previous in definition.branches[: branch.ordinal]
+        )
+        return condition_and(
+            (current, *(condition_not(expression) for expression in earlier))
+        )
+
+    def _resolved_variants_for(
+        self,
+        name: str,
+        language: str,
+        *,
+        root_scope: str,
+        stack: tuple[str, ...] = (),
+    ) -> tuple[_ResolvedVariant, ...]:
         actual_name = self._definition_names.get(name.casefold())
         if actual_name is None:
             return ()
         folded_name = actual_name.casefold()
-        if folded_name in _stack or len(_stack) >= MAX_RECURSION_DEPTH:
+        if folded_name in stack or len(stack) >= MAX_RECURSION_DEPTH:
             return ()
-        cache_key = (normalized_language, actual_name)
-        if not _stack and cache_key in self._variant_cache:
-            return self._variant_cache[cache_key]
+        cache_key = (language, actual_name, root_scope)
+        if cache_key in self._resolved_variant_cache:
+            return self._resolved_variant_cache[cache_key]
 
-        variants: list[str] = []
-        for localisation_key in self.definitions[actual_name]:
+        definition = self.structured_definitions[actual_name]
+        variants: list[_ResolvedVariant] = []
+        seen: set[tuple[str, ConditionExpression]] = set()
+        for branch in definition.branches:
+            branch_condition = self._selection_condition(
+                definition,
+                branch,
+                root_scope,
+            )
+            branch_sat = conditions_satisfiable((branch_condition,))
+            if not branch_sat.possible and not branch_sat.truncated:
+                continue
             value = self._localisation_value(
-                normalized_language,
-                localisation_key,
+                language,
+                branch.localisation_key,
             )
-            value = self._expand_static_references(
+            value = self._expand_static_references(value, language, ())
+            nested_variants = self._expand_nested_dynamic(
                 value,
-                normalized_language,
-                (),
+                language,
+                (*stack, folded_name),
+                root_scope=root_scope,
             )
-            variants.extend(
-                self._expand_nested_dynamic(
-                    value,
-                    normalized_language,
-                    (*_stack, folded_name),
+            branch_description = (
+                "fallback"
+                if branch.trigger is None
+                else describe_condition(
+                    condition_from_trigger(
+                        branch.trigger,
+                        root_scope=root_scope,
+                    )
                 )
             )
+            for nested in nested_variants:
+                combined = condition_and(
+                    (branch_condition, nested.condition)
+                )
+                combined_sat = conditions_satisfiable((combined,))
+                if not combined_sat.possible and not combined_sat.truncated:
+                    continue
+                item = _ResolvedVariant(
+                    text=nested.text,
+                    condition=combined,
+                    localisation_key=branch.localisation_key,
+                    source=branch.source,
+                    condition_description=branch_description,
+                    condition_exact=(
+                        branch_sat.exact
+                        and nested.condition_exact
+                        and combined_sat.exact
+                    ),
+                )
+                identity = (item.text, item.condition)
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                variants.append(item)
+                if len(variants) >= MAX_VARIANTS_PER_DEFINITION:
+                    break
             if len(variants) >= MAX_VARIANTS_PER_DEFINITION:
                 break
 
-        result = tuple(dict.fromkeys(variants))[:MAX_VARIANTS_PER_DEFINITION]
-        if not _stack:
-            self._variant_cache[cache_key] = result
+        result = tuple(variants)
+        self._resolved_variant_cache[cache_key] = result
         return result
 
     def _expand_nested_dynamic(
@@ -446,43 +740,67 @@ class ModLocalisation:
         text: str,
         language: str,
         stack: tuple[str, ...],
-    ) -> tuple[str, ...]:
+        *,
+        root_scope: str,
+    ) -> tuple[_ResolvedVariant, ...]:
         if len(stack) >= MAX_RECURSION_DEPTH:
-            return (text,)
-        groups = self._token_choices(text, language, stack=stack)
+            return (_ResolvedVariant(text, condition_exact=False),)
+        groups = self._token_choices(
+            text,
+            language,
+            stack=stack,
+            root_scope=root_scope,
+        )
         if not groups:
-            return (text,)
+            return (_ResolvedVariant(text, condition_exact=True),)
 
-        combinations = 1
-        selected_groups: list[
-            tuple[str, tuple[str, ...], tuple[str, ...]]
-        ] = []
+        states = (_ResolvedVariant(text, condition_exact=True),)
         for group in groups:
-            selected_groups.append(group)
-            variants = group[2]
-            combinations *= len(variants)
-            if combinations > MAX_VARIANTS_PER_DEFINITION:
+            expanded: list[_ResolvedVariant] = []
+            seen: set[tuple[str, ConditionExpression]] = set()
+            for state in states:
+                for variant in group.variants:
+                    condition = condition_and(
+                        (state.condition, variant.condition)
+                    )
+                    sat = conditions_satisfiable((condition,))
+                    if not sat.possible and not sat.truncated:
+                        continue
+                    candidate = state.text
+                    for token in group.tokens:
+                        candidate = candidate.replace(token, variant.text)
+                    identity = (candidate, condition)
+                    if identity in seen:
+                        continue
+                    seen.add(identity)
+                    expanded.append(
+                        _ResolvedVariant(
+                            candidate,
+                            condition,
+                            condition_exact=(
+                                state.condition_exact
+                                and variant.condition_exact
+                                and sat.exact
+                            ),
+                        )
+                    )
+                    if len(expanded) >= MAX_VARIANTS_PER_DEFINITION:
+                        break
+                if len(expanded) >= MAX_VARIANTS_PER_DEFINITION:
+                    break
+            states = tuple(expanded)
+            if not states:
                 break
-        if not selected_groups:
-            return (text,)
-
-        output: list[str] = []
-        for selected in product(*(group[2] for group in selected_groups)):
-            candidate = text
-            for (_, tokens, _), value in zip(selected_groups, selected):
-                for token in tokens:
-                    candidate = candidate.replace(token, value)
-            output.append(candidate)
-            if len(output) >= MAX_VARIANTS_PER_DEFINITION:
-                break
-        return tuple(dict.fromkeys(output))
+        return states or (_ResolvedVariant(text, condition_exact=False),)
 
     def _automatic_variants_for(
         self,
         token_content: str,
         language: str,
-    ) -> tuple[str, tuple[str, ...]] | None:
-        cache_key = (language, token_content.casefold())
+        *,
+        root_scope: str,
+    ) -> tuple[str, tuple[_ResolvedVariant, ...]] | None:
+        cache_key = (language, token_content.casefold(), root_scope)
         if cache_key in self._automatic_variant_cache:
             return self._automatic_variant_cache[cache_key]
         if cache_key in self._automatic_resolving:
@@ -497,13 +815,31 @@ class ModLocalisation:
 
         self._automatic_resolving.add(cache_key)
         try:
-            expanded: list[str] = []
+            expanded: list[_ResolvedVariant] = []
             for raw_value in automatic.values:
                 value = self._expand_static_references(raw_value, language, ())
                 expanded.extend(
-                    self._expand_nested_dynamic(value, language, ())
+                    self._expand_nested_dynamic(
+                        value,
+                        language,
+                        (),
+                        root_scope=root_scope,
+                    )
                 )
-            result = (automatic.name, tuple(dict.fromkeys(expanded)))
+            unique: list[_ResolvedVariant] = []
+            seen: set[tuple[str, ConditionExpression]] = set()
+            for item in expanded:
+                identity = (item.text, item.condition)
+                if identity not in seen:
+                    seen.add(identity)
+                    unique.append(
+                        _ResolvedVariant(
+                            item.text,
+                            item.condition,
+                            condition_exact=False,
+                        )
+                    )
+            result = (automatic.name, tuple(unique))
         finally:
             self._automatic_resolving.discard(cache_key)
         self._automatic_variant_cache[cache_key] = result
@@ -515,8 +851,9 @@ class ModLocalisation:
         language: str,
         *,
         stack: tuple[str, ...] = (),
-    ) -> list[tuple[str, tuple[str, ...], tuple[str, ...]]]:
-        choices: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = []
+        root_scope: str = "root",
+    ) -> list[_DynamicChoice]:
+        choices: list[_DynamicChoice] = []
         seen_literals: set[str] = set()
         for match in _DYNAMIC_TOKEN_RE.finditer(text):
             literal = match.group(0)
@@ -526,15 +863,30 @@ class ModLocalisation:
             content = match.group(1)
             name = self._definition_name(content)
             if name is not None and name.casefold() not in stack:
-                variants = self.variants_for(name, language, _stack=stack)
+                reference_scope = self._reference_scope(
+                    content,
+                    root_scope,
+                )
+                variants = self._resolved_variants_for(
+                    name,
+                    language,
+                    root_scope=reference_scope,
+                    stack=stack,
+                )
                 if variants:
-                    choices.append((name, (literal,), variants))
+                    choices.append(_DynamicChoice(name, (literal,), variants))
                 continue
-            automatic = self._automatic_variants_for(content, language)
+            automatic = self._automatic_variants_for(
+                content,
+                language,
+                root_scope=root_scope,
+            )
             if automatic is not None:
                 automatic_name, variants = automatic
                 if variants:
-                    choices.append((automatic_name, (literal,), variants))
+                    choices.append(
+                        _DynamicChoice(automatic_name, (literal,), variants)
+                    )
         return choices
 
     def resolve_worst_case(
@@ -551,16 +903,26 @@ class ModLocalisation:
         choices = self._token_choices(text, normalized_language)
 
         combinations = 1
-        for _, _, variants in choices:
-            combinations *= len(variants)
+        for choice in choices:
+            combinations *= len(choice.variants)
         evaluated = 0
         truncated = combinations > MAX_COMBINATIONS
-        selected_values: tuple[str, ...] = ()
+        selected_values: tuple[_ResolvedVariant, ...] = ()
         resolved_text = text
+        incompatible = 0
+        symbolic_checks = 0
+        selected_conditions_exact = True
 
         if choices and not truncated:
             best_key: tuple[Score, str] | None = None
-            for selected in product(*(choice[2] for choice in choices)):
+            for selected in product(*(choice.variants for choice in choices)):
+                sat = conditions_satisfiable(
+                    variant.condition for variant in selected
+                )
+                symbolic_checks += 1
+                if not sat.possible and not sat.truncated:
+                    incompatible += 1
+                    continue
                 candidate = _replace_selected(text, choices, selected)
                 key = (score(candidate), candidate)
                 evaluated += 1
@@ -568,35 +930,59 @@ class ModLocalisation:
                     best_key = key
                     resolved_text = candidate
                     selected_values = tuple(selected)
+                    selected_conditions_exact = sat.exact
         elif choices:
             current = text
-            selected: list[str] = []
+            selected: list[_ResolvedVariant] = []
+            selected_conditions: list[ConditionExpression] = []
             for choice in choices:
-                best_value = max(
-                    choice[2],
-                    key=lambda value: (
-                        score(_replace_one_group(current, choice, value)),
-                        value,
+                possible: list[tuple[_ResolvedVariant, bool]] = []
+                for variant in choice.variants:
+                    sat = conditions_satisfiable(
+                        (*selected_conditions, variant.condition)
+                    )
+                    symbolic_checks += 1
+                    if sat.possible or sat.truncated:
+                        possible.append((variant, sat.exact))
+                    else:
+                        incompatible += 1
+                pool = possible or [
+                    (variant, False) for variant in choice.variants
+                ]
+                best_value, exact = max(
+                    pool,
+                    key=lambda item: (
+                        score(_replace_one_group(current, choice, item[0])),
+                        item[0].text,
                     ),
                 )
-                evaluated += len(choice[2])
+                evaluated += len(choice.variants)
                 current = _replace_one_group(current, choice, best_value)
                 selected.append(best_value)
+                selected_conditions.append(best_value.condition)
+                selected_conditions_exact = selected_conditions_exact and exact
             resolved_text = current
             selected_values = tuple(selected)
 
         replacements: list[DynamicReplacement] = []
-        for (name, tokens, variants), selected in zip(
+        for choice, selected in zip(
             choices,
             selected_values,
         ):
-            for token in tokens:
+            variant_texts = tuple(
+                dict.fromkeys(variant.text for variant in choice.variants)
+            )
+            for token in choice.tokens:
                 replacements.append(
                     DynamicReplacement(
                         token=token,
-                        name=name,
-                        selected=selected,
-                        variants=variants,
+                        name=choice.name,
+                        selected=selected.text,
+                        variants=variant_texts,
+                        localisation_key=selected.localisation_key,
+                        source=selected.source,
+                        condition=selected.condition_description,
+                        condition_exact=selected.condition_exact,
                     )
                 )
 
@@ -606,6 +992,24 @@ class ModLocalisation:
                 for match in _DYNAMIC_TOKEN_RE.finditer(resolved_text)
             )
         )
+        all_conditions_exact = all(
+            variant.condition_exact
+            for choice in choices
+            for variant in choice.variants
+        )
+        confidence = (
+            "partial"
+            if unresolved
+            else (
+                "exact"
+                if (
+                    not truncated
+                    and all_conditions_exact
+                    and selected_conditions_exact
+                )
+                else "conservative"
+            )
+        )
         return DynamicResolution(
             source_text=text,
             text=resolved_text,
@@ -613,13 +1017,16 @@ class ModLocalisation:
             unresolved_tokens=unresolved,
             combinations_evaluated=evaluated,
             truncated=truncated,
+            incompatible_combinations=incompatible,
+            symbolic_checks=symbolic_checks,
+            confidence=confidence,
         )
 
 
 def _replace_selected(
     text: str,
-    choices: Iterable[tuple[str, tuple[str, ...], tuple[str, ...]]],
-    selected: Iterable[str],
+    choices: Iterable[_DynamicChoice],
+    selected: Iterable[_ResolvedVariant],
 ) -> str:
     result = text
     for choice, value in zip(choices, selected):
@@ -629,10 +1036,10 @@ def _replace_selected(
 
 def _replace_one_group(
     text: str,
-    choice: tuple[str, tuple[str, ...], tuple[str, ...]],
-    value: str,
+    choice: _DynamicChoice,
+    value: _ResolvedVariant,
 ) -> str:
     result = text
-    for token in choice[1]:
-        result = result.replace(token, value)
+    for token in choice.tokens:
+        result = result.replace(token, value.text)
     return result

@@ -1,4 +1,4 @@
-EaW Focus Bridge 0.7.7F2
+EaW Focus Bridge 0.8.0F1
 ======================
 
 1. Закройте Notepad++.

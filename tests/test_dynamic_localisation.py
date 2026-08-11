@@ -3,6 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from eaw_focus_preview.bmfont import FontRepository
+from eaw_focus_preview.clausewitz_interpreter import (
+    child_blocks,
+    condition_from_trigger,
+    expression_predicates,
+    parse_clausewitz,
+)
 from eaw_focus_preview.dynamic_localisation import (
     ModLocalisation,
     parse_localisation_text,
@@ -235,3 +241,153 @@ def test_automatic_getters_use_finite_mod_values_and_leave_variables(
     assert capital.text == "Невероятно длинная столица"
     assert runtime_variable.text == "[?treasury]"
     assert runtime_variable.unresolved_tokens == ("[?treasury]",)
+
+
+def test_clausewitz_parser_preserves_variable_comparison_operators() -> None:
+    parsed = parse_clausewitz(
+        "trigger = { check_variable = { var = treasury value > 4 } }"
+    )
+    trigger = child_blocks(parsed, "trigger")[0]
+    expression = condition_from_trigger(trigger)
+    predicates = expression_predicates(expression)
+
+    assert len(predicates) == 1
+    assert predicates[0].key == "variable:treasury"
+    assert predicates[0].operator == ">"
+    assert predicates[0].value == "4"
+
+
+def test_symbolic_interpreter_rejects_impossible_cross_token_state(
+    tmp_path: Path,
+) -> None:
+    scripted = tmp_path / "common" / "scripted_localisation"
+    localisation = tmp_path / "localisation" / "russian"
+    scripted.mkdir(parents=True)
+    localisation.mkdir(parents=True)
+    (scripted / "states.txt").write_text(
+        """
+defined_text = {
+ name = FIRST
+ text = { trigger = { state = 1 } localization_key = FIRST_ONE }
+ text = { trigger = { state = 2 } localization_key = FIRST_TWO }
+ text = { localization_key = FIRST_DEFAULT }
+}
+defined_text = {
+ name = SECOND
+ text = { trigger = { state = 1 } localization_key = SECOND_ONE }
+ text = { trigger = { state = 2 } localization_key = SECOND_TWO }
+ text = { localization_key = SECOND_DEFAULT }
+}
+""",
+        encoding="utf-8",
+    )
+    (localisation / "states_l_russian.yml").write_text(
+        '''l_russian:
+ FIRST_ONE:0 "AAAAAAAAAA"
+ FIRST_TWO:0 "a"
+ FIRST_DEFAULT:0 "f"
+ SECOND_ONE:0 "b"
+ SECOND_TWO:0 "BBBBBBBBBB"
+ SECOND_DEFAULT:0 "g"
+''',
+        encoding="utf-8-sig",
+    )
+    mod = ModLocalisation.load(tmp_path)
+
+    result = mod.resolve_worst_case(
+        "[Root.FIRST]/[Root.SECOND]",
+        "russian",
+        lambda candidate: (len(candidate), candidate),
+    )
+
+    assert result.text in {"AAAAAAAAAA/b", "a/BBBBBBBBBB"}
+    assert result.text != "AAAAAAAAAA/BBBBBBBBBB"
+    assert result.incompatible_combinations > 0
+    assert result.confidence == "exact"
+
+
+def test_unknown_scripted_trigger_is_conservative_not_unresolved(
+    tmp_path: Path,
+) -> None:
+    scripted = tmp_path / "common" / "scripted_localisation"
+    localisation = tmp_path / "localisation" / "russian"
+    scripted.mkdir(parents=True)
+    localisation.mkdir(parents=True)
+    (scripted / "unknown.txt").write_text(
+        """
+defined_text = {
+ name = UNKNOWN_BRANCH
+ text = {
+  trigger = { custom_eaw_scripted_trigger = yes }
+  localization_key = UNKNOWN_LONG
+ }
+ text = { localization_key = UNKNOWN_SHORT }
+}
+""",
+        encoding="utf-8",
+    )
+    (localisation / "unknown_l_russian.yml").write_text(
+        'l_russian:\n UNKNOWN_LONG:0 "очень длинный вариант"\n'
+        ' UNKNOWN_SHORT:0 "короткий"\n',
+        encoding="utf-8-sig",
+    )
+    mod = ModLocalisation.load(tmp_path)
+
+    result = mod.resolve_worst_case(
+        "[Root.UNKNOWN_BRANCH]",
+        "russian",
+        lambda candidate: (len(candidate),),
+    )
+
+    assert result.text == "очень длинный вариант"
+    assert result.unresolved_tokens == ()
+    assert result.confidence == "conservative"
+    assert result.replacements[0].condition == (
+        "custom_eaw_scripted_trigger = yes"
+    )
+
+
+def test_base_game_scripted_definition_is_loaded_lazily(
+    tmp_path: Path,
+) -> None:
+    base = tmp_path / "game"
+    mod_root = tmp_path / "mod"
+    base_scripted = base / "common" / "scripted_localisation"
+    base_loc = base / "localisation" / "russian"
+    mod_scripted = mod_root / "common" / "scripted_localisation"
+    mod_loc = mod_root / "localisation" / "russian"
+    for directory in (base_scripted, base_loc, mod_scripted, mod_loc):
+        directory.mkdir(parents=True)
+    (base_scripted / "base.txt").write_text(
+        "defined_text = { name = BASE_DYNAMIC "
+        "text = { localization_key = BASE_TEXT } }",
+        encoding="utf-8",
+    )
+    (base_loc / "base_l_russian.yml").write_text(
+        'l_russian:\n BASE_TEXT:0 "текст из игры"\n',
+        encoding="utf-8-sig",
+    )
+    (mod_scripted / "mod.txt").write_text(
+        "defined_text = { name = MOD_DYNAMIC "
+        "text = { localization_key = MOD_TEXT } }",
+        encoding="utf-8",
+    )
+    (mod_loc / "mod_l_russian.yml").write_text(
+        'l_russian:\n MOD_TEXT:0 "текст мода"\n',
+        encoding="utf-8-sig",
+    )
+
+    mod = ModLocalisation.load(mod_root, base_game_root=base)
+    assert "BASE_DYNAMIC" not in mod.definitions
+
+    result = mod.resolve_worst_case(
+        "[Root.BASE_DYNAMIC]",
+        "russian",
+        lambda candidate: (len(candidate),),
+    )
+
+    assert result.text == "текст из игры"
+    assert "BASE_DYNAMIC" in mod.definitions
+    assert result.replacements[0].source == (
+        "common/scripted_localisation/base.txt"
+    )

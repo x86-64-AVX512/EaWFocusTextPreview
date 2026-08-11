@@ -632,7 +632,39 @@ class MainWindow(QMainWindow):
                 self.dynamic_checkbox.blockSignals(True)
                 self.dynamic_checkbox.setChecked(False)
                 self.dynamic_checkbox.blockSignals(False)
+                self.refresh_preview()
+                return
+        if enabled:
+            self._ensure_clausewitz_base_loaded()
         self.refresh_preview()
+
+    def _ensure_clausewitz_base_loaded(self) -> None:
+        if (
+            self.mod_localisation is None
+            or self.mod_localisation.base_game_root is not None
+            or self.repository.game_root is None
+        ):
+            return
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        QApplication.processEvents()
+        load_error: str | None = None
+        try:
+            upgraded = ModLocalisation.load(
+                self.mod_localisation.root,
+                base_game_root=self.repository.game_root,
+            )
+            self.set_mod_localisation(upgraded)
+        except (OSError, ModLocalisationError) as error:
+            load_error = str(error)
+        finally:
+            QApplication.restoreOverrideCursor()
+        if load_error is not None:
+            QMessageBox.warning(
+                self,
+                "Не удалось загрузить данные HOI4",
+                "Символический интерпретатор продолжит работу только с "
+                f"файлами мода.\n\n{load_error}",
+            )
 
     def set_mod_localisation(
         self,
@@ -873,6 +905,18 @@ class MainWindow(QMainWindow):
         details = (
             f"Динамическая локализация: подстановок {replacements}"
         )
+        confidence_labels = {
+            "exact": "точный символический перебор",
+            "conservative": "консервативная оценка",
+            "partial": "частичная оценка",
+        }
+        details += " · " + confidence_labels.get(
+            str(report.get("confidence", "conservative")),
+            "консервативная оценка",
+        )
+        rejected = int(report.get("incompatible_combinations", 0))
+        if rejected:
+            details += f" · отброшено несовместимых вариантов: {rejected}"
         if unresolved:
             details += " · не разрешено: " + " ".join(unresolved)
         else:

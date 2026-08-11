@@ -236,12 +236,15 @@ def _local_check(
     app = QApplication.instance()
     if app is None:
         app = QApplication([sys.argv[0]])
+    repository = FontRepository.load(fonts_directory())
     mod_localisation = (
-        ModLocalisation.load(selected_path)
+        ModLocalisation.load(
+            selected_path,
+            base_game_root=repository.game_root,
+        )
         if selected_path is not None
         else None
     )
-    repository = FontRepository.load(fonts_directory())
     engine = FocusValidationEngine(repository, mod_localisation)
     return [engine.process_document(document) for document in documents]
 

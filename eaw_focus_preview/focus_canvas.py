@@ -290,6 +290,15 @@ class FocusCanvas(QWidget):
                 for token in resolution.unresolved_tokens
             )
         )
+        confidence_order = {"exact": 0, "conservative": 1, "partial": 2}
+        confidence = max(
+            (
+                resolution.confidence
+                for resolution in self._dynamic_resolutions.values()
+            ),
+            key=lambda value: confidence_order.get(value, 2),
+            default="exact",
+        )
         return {
             "available": self.mod_localisation is not None,
             "enabled": (
@@ -302,8 +311,26 @@ class FocusCanvas(QWidget):
                 else None
             ),
             "language": self.language,
+            "engine": "clausewitz-symbolic/1",
+            "confidence": confidence,
+            "base_game_path": (
+                str(self.mod_localisation.base_game_root)
+                if (
+                    self.mod_localisation is not None
+                    and self.mod_localisation.base_game_root is not None
+                )
+                else None
+            ),
             "warning": DYNAMIC_LOCALISATION_WARNING,
             "replacement_count": replacements,
+            "symbolic_checks": sum(
+                resolution.symbolic_checks
+                for resolution in self._dynamic_resolutions.values()
+            ),
+            "incompatible_combinations": sum(
+                resolution.incompatible_combinations
+                for resolution in self._dynamic_resolutions.values()
+            ),
             "unresolved_tokens": list(unresolved),
             "fields": {
                 field: resolution.as_dict()
